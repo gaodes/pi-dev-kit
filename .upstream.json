@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "updatedAt": "2026-04-24",
+  "primary": {
+    "name": "@aliou/pi-dev-kit",
+    "type": "npm",
+    "url": "npm:@aliou/pi-dev-kit",
+    "license": "MIT",
+    "relationship": "fork",
+    "upstreamVersion": "0.6.4"
+  }
+}
