@@ -1,0 +1,43 @@
+{
+  "name": "pi-tools",
+  "version": "0.1.0",
+  "description": "Runtime tools for Pi — version, docs, changelog, and package manager detection",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "pi",
+    "tools",
+    "dev-kit"
+  ],
+  "type": "module",
+  "main": "./src/index.ts",
+  "files": [
+    "src/",
+    "README.md"
+  ],
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "dependencies": {
+    "@sinclair/typebox": "^0.34.41"
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-coding-agent": "*",
+    "@mariozechner/pi-tui": "*"
+  },
+  "peerDependenciesMeta": {
+    "@mariozechner/pi-coding-agent": {
+      "optional": true
+    },
+    "@mariozechner/pi-tui": {
+      "optional": true
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@gitlab-ssh.elches.dev:2222/agents/primecodex/extensions/pi-tools.git"
+  },
+  "license": "MIT"
+}
