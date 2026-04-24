@@ -9,7 +9,7 @@ import type {
 } from "@mariozechner/pi-coding-agent";
 import { VERSION } from "@mariozechner/pi-coding-agent";
 import { Text } from "@mariozechner/pi-tui";
-import { type Static, Type } from "@sinclair/typebox";
+import { type Static, Type } from "typebox";
 import { findPiInstallation } from "./utils";
 
 const GITHUB_RAW_CHANGELOG_URL =

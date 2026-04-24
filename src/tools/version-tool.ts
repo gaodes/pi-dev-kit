@@ -7,7 +7,7 @@ import type {
 } from "@mariozechner/pi-coding-agent";
 import { VERSION } from "@mariozechner/pi-coding-agent";
 import { Text } from "@mariozechner/pi-tui";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 
 const VersionParams = Type.Object({});
 type VersionParamsType = Record<string, never>;
