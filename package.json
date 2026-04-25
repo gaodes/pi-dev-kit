@@ -1,43 +1,43 @@
 {
-  "name": "pi-tools",
-  "version": "0.1.1",
-  "description": "Runtime tools for Pi — version, docs, changelog, updater, and package manager",
-  "keywords": [
-    "pi-package",
-    "pi-extension",
-    "pi",
-    "tools",
-    "dev-kit"
-  ],
-  "type": "module",
-  "main": "./src/index.ts",
-  "files": [
-    "src/",
-    "README.md"
-  ],
-  "pi": {
-    "extensions": [
-      "./src/index.ts"
-    ]
-  },
-  "dependencies": {
-    "typebox": "^1.1.24"
-  },
-  "peerDependencies": {
-    "@mariozechner/pi-coding-agent": "*",
-    "@mariozechner/pi-tui": "*"
-  },
-  "peerDependenciesMeta": {
-    "@mariozechner/pi-coding-agent": {
-      "optional": true
-    },
-    "@mariozechner/pi-tui": {
-      "optional": true
-    }
-  },
-  "repository": {
-    "type": "git",
-    "url": "ssh://git@gitlab-ssh.elches.dev:2222/agents/primecodex/extensions/pi-tools.git"
-  },
-  "license": "MIT"
+	"name": "pi-tools",
+	"version": "0.1.1",
+	"description": "Runtime tools for Pi — version, docs, changelog, updater, package manager, and extension benchmarking",
+	"keywords": [
+		"pi-package",
+		"pi-extension",
+		"pi",
+		"tools",
+		"dev-kit"
+	],
+	"type": "module",
+	"main": "./src/index.ts",
+	"files": [
+		"src/",
+		"README.md"
+	],
+	"pi": {
+		"extensions": [
+			"./src/index.ts"
+		]
+	},
+	"dependencies": {
+		"typebox": "^1.1.24"
+	},
+	"peerDependencies": {
+		"@mariozechner/pi-coding-agent": "*",
+		"@mariozechner/pi-tui": "*"
+	},
+	"peerDependenciesMeta": {
+		"@mariozechner/pi-coding-agent": {
+			"optional": true
+		},
+		"@mariozechner/pi-tui": {
+			"optional": true
+		}
+	},
+	"repository": {
+		"type": "git",
+		"url": "ssh://git@gitlab-ssh.elches.dev:2222/agents/primecodex/extensions/pi-tools.git"
+	},
+	"license": "MIT"
 }

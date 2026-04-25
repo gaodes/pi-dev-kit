@@ -1,6 +1,6 @@
 # pi-tools
 
-Runtime tools for Pi — version, docs, changelog, updater, and package manager.
+Runtime tools for Pi — version, docs, changelog, updater, package manager, and extension benchmarking.
 
 Forked from `@aliou/pi-dev-kit` with fixes for global installation detection and graceful fallbacks.
 
@@ -15,6 +15,7 @@ Forked from `@aliou/pi-dev-kit` with fixes for global installation detection and
 | `pi_changelog_versions` | Lists all available Pi changelog versions. |
 | `pi_updater` | Check for Pi updates, view version status, install updates, or dismiss versions. |
 | `pi_package_manager` | Scan installed Pi packages, find orphaned npm packages, re-register or bulk-uninstall them. Actions: `scan`, `orphans`, `reinstall`, `uninstall`. |
+| `pi_ext_benchmark` | Profile Pi extension loading times — discovers all extensions (global, project-local, packages) and measures import + factory execution time per extension. Actions: `profile` (default), `list`. Scopes: `all`, `global`, `project`, `packages`. |
 
 ## Commands
 
