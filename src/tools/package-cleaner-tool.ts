@@ -207,6 +207,21 @@ function doReinstall(packageNames: string[]): { reinstalled: string[]; failed: s
 		}
 
 		settings.packages.push(pkg);
+
+		// Also update the npm global install to latest version
+		const npmName = extractNpmPackageName(pkg);
+		if (npmName) {
+			try {
+				execSync(`npm install -g ${npmName}@latest`, {
+					encoding: "utf-8",
+					timeout: 60_000,
+				});
+			} catch (e) {
+				failed.push(`${pkg} — npm install failed: ${e instanceof Error ? e.message : String(e)}`);
+				continue;
+			}
+		}
+
 		reinstalled.push(pkg);
 	}
 
