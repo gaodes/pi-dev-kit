@@ -1,6 +1,6 @@
 # pi-tools
 
-Runtime tools for Pi — version, docs, changelog, and package manager detection.
+Runtime tools for Pi — version, docs, changelog, updater, and package manager.
 
 Forked from `@aliou/pi-dev-kit` with fixes for global installation detection and graceful fallbacks.
 
@@ -13,6 +13,15 @@ Forked from `@aliou/pi-dev-kit` with fixes for global installation detection and
 | `pi_docs` | Lists Pi markdown documentation files from the installation directory. |
 | `pi_changelog` | Returns changelog entries for a specific Pi version (or latest). Fetches from GitHub for versions newer than installed. |
 | `pi_changelog_versions` | Lists all available Pi changelog versions. |
+| `pi_updater` | Check for Pi updates, view version status, install updates, or dismiss versions. |
+| `pi_package_manager` | Scan installed Pi packages, find orphaned npm packages, re-register or bulk-uninstall them. Actions: `scan`, `orphans`, `reinstall`, `uninstall`. |
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `/update` | Interactive Pi update flow — check, install, or dismiss updates. |
+| `/manage-packages` | Interactive Pi package manager — scan, remove orphans, re-register, or uninstall packages. |
 
 ## Key fixes vs upstream
 

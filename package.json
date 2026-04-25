@@ -1,7 +1,7 @@
 {
   "name": "pi-tools",
   "version": "0.1.1",
-  "description": "Runtime tools for Pi — version, docs, changelog, and package manager detection",
+  "description": "Runtime tools for Pi — version, docs, changelog, updater, and package manager",
   "keywords": [
     "pi-package",
     "pi-extension",
