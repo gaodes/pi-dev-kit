@@ -2,7 +2,6 @@ import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { setupChangelogTool } from "./changelog-tool";
 import { setupDocsTool } from "./docs-tool";
 import { setupPackageManagerTool } from "./package-manager-tool";
-import { setupPkgCleanerTool } from "./pkg-cleaner-tool";
 import { setupUpdaterTool } from "./updater-tool";
 import { setupVersionTool } from "./version-tool";
 
@@ -12,5 +11,4 @@ export function setupTools(pi: ExtensionAPI) {
 	setupDocsTool(pi);
 	setupChangelogTool(pi);
 	setupUpdaterTool(pi);
-	setupPkgCleanerTool(pi);
 }
