@@ -223,8 +223,9 @@ export function setupChangelogTool(pi: ExtensionAPI) {
 			};
 		},
 
-		renderCall(args: ChangelogParams, theme: Theme) {
-			const label = args.version ? `v${args.version.replace(/^v/, "")}` : "latest";
+		renderCall(args: object, theme: Theme) {
+			const v = (args as ChangelogParams).version;
+			const label = v ? `v${v.replace(/^v/, "")}` : "latest";
 			return new Text(theme.fg("dim", `Pi Changelog: ${label}`), 0, 0);
 		},
 
@@ -306,7 +307,7 @@ export function setupChangelogTool(pi: ExtensionAPI) {
 			};
 		},
 
-		renderCall(_args: ChangelogVersionsParams, theme: Theme) {
+		renderCall(_args: object, theme: Theme) {
 			return new Text(theme.fg("dim", "Pi Changelog Versions"), 0, 0);
 		},
 

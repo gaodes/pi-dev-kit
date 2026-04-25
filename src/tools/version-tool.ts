@@ -41,7 +41,7 @@ export function setupVersionTool(pi: ExtensionAPI) {
 			};
 		},
 
-		renderCall(_args: VersionParamsType, theme: Theme) {
+		renderCall(_args: object, theme: Theme) {
 			return new Text(theme.fg("dim", "Pi Version"), 0, 0);
 		},
 

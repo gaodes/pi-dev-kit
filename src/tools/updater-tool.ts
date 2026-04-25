@@ -562,8 +562,8 @@ export function setupUpdaterTool(pi: ExtensionAPI) {
 			}
 		},
 
-		renderCall(args: UpdaterParamsType, theme: Theme) {
-			const action = args.action ?? "status";
+		renderCall(args: object, theme: Theme) {
+			const action = (args as UpdaterParamsType).action ?? "status";
 			return new Text(theme.fg("dim", `Pi Updater: ${action}`), 0, 0);
 		},
 

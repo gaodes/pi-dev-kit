@@ -103,7 +103,7 @@ export function setupDocsTool(pi: ExtensionAPI) {
 			};
 		},
 
-		renderCall(_args: DocsParams, theme: Theme) {
+		renderCall(_args: object, theme: Theme) {
 			return new Text(theme.fg("dim", "Pi Docs"), 0, 0);
 		},
 

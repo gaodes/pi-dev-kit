@@ -147,7 +147,7 @@ function setupDetectPackageManagerTool(pi: ExtensionAPI) {
 			};
 		},
 
-		renderCall(_args: DetectParamsType, theme: Theme) {
+		renderCall(_args: object, theme: Theme) {
 			return new Text(theme.fg("dim", "Detect Package Manager"), 0, 0);
 		},
 
@@ -498,11 +498,11 @@ function setupPiPackageManagerTool(pi: ExtensionAPI) {
 			}
 		},
 
-		renderCall(args: PiPkgParamsType, theme: Theme) {
-			const action = args.action ?? "scan";
+		renderCall(args: object, theme: Theme) {
+			const action = (args as PiPkgParamsType).action ?? "scan";
 			const suffix =
-				(action === "uninstall" || action === "reinstall") && args.packages?.length
-					? ` (${args.packages.length} packages)`
+				(action === "uninstall" || action === "reinstall") && (args as PiPkgParamsType).packages?.length
+					? ` (${(args as PiPkgParamsType)?.packages?.length} packages)`
 					: "";
 			return new Text(theme.fg("dim", `Pi Package Manager: ${action}${suffix}`), 0, 0);
 		},
