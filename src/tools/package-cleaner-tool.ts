@@ -1,6 +1,7 @@
 import type {
 	AgentToolResult,
 	ExtensionAPI,
+	ExtensionContext,
 	Theme,
 	ToolRenderResultOptions,
 } from "@mariozechner/pi-coding-agent";
@@ -370,6 +371,141 @@ export function setupPackageCleanerTool(pi: ExtensionAPI) {
 			}
 
 			return new Text(theme.fg("accent", msg), 0, 0);
+		},
+	});
+
+	// --- /clean-packages command ---
+
+	pi.registerCommand("clean-packages", {
+		description: "Scan and clean up installed Pi packages",
+		handler: async (_rawArgs, ctx) => {
+			const entries = scanPackages();
+			const installed = entries.filter(e => e.status === "installed");
+			const registered = entries.filter(e => e.status === "registered");
+			const orphaned = entries.filter(e => e.status === "orphaned");
+
+			if (entries.length === 0) {
+				ctx.ui.notify("No Pi packages found in settings.", "info");
+				return;
+			}
+
+			// Show summary
+			let summary = `Pi Packages (${entries.length} total)\n`;
+			summary += `──────────────────────\n`;
+			if (installed.length > 0) {
+				summary += `\nInstalled (${installed.length}):\n`;
+				for (const e of installed) {
+					summary += `  \u2705 ${e.name} @${e.version ?? "?"}\n`;
+				}
+			}
+			if (registered.length > 0) {
+				summary += `\nRegistered (${registered.length}):\n`;
+				for (const e of registered) {
+					summary += `  \uD83D\uDCCB ${e.name}${e.version ? ` @${e.version}` : ""}\n`;
+				}
+			}
+			if (orphaned.length > 0) {
+				summary += `\nOrphaned (${orphaned.length}):\n`;
+				for (const e of orphaned) {
+					summary += `  \u26A0\uFE0F ${e.npmPackage} @${e.version ?? "?"}\n`;
+				}
+			}
+
+			ctx.ui.notify(summary, "info");
+
+			if (orphaned.length === 0) {
+				// No orphans — offer to manage installed packages
+				const allPkgs = [...installed, ...registered];
+				if (allPkgs.length === 0) {
+					ctx.ui.notify("Nothing to manage.", "info");
+					return;
+				}
+
+				const choices = allPkgs.map(e => {
+					const label = e.version
+						? `${e.name} @${e.version}`
+						: e.name;
+					return label;
+				});
+
+				const toRemove = await ctx.ui.select(
+					"Select packages to uninstall",
+					[...choices, "Cancel"],
+				);
+
+				if (!toRemove || toRemove === "Cancel") return;
+
+				// Map label back to package entry
+				const target = allPkgs.find(e => {
+					const label = e.version ? `${e.name} @${e.version}` : e.name;
+					return label === toRemove;
+				});
+				if (!target) return;
+
+				const confirm = await ctx.ui.confirm(
+					`Uninstall ${target.name}?`,
+					"This will remove it from settings and run npm uninstall -g.",
+				);
+				if (!confirm) return;
+
+				const result = doUninstall([target.name]);
+				if (result.uninstalled.length > 0) {
+					ctx.ui.notify(`Uninstalled: ${result.uninstalled.join(", ")}`, "info");
+				} else if (result.failed.length > 0) {
+					ctx.ui.notify(`Failed: ${result.failed.join("; ")}`, "error");
+				}
+				return;
+			}
+
+			// Orphans found — offer cleanup
+			const orphanLabels = orphaned.map(e => `${e.npmPackage} @${e.version ?? "?"}`);
+			const choice = await ctx.ui.select(
+				`${orphaned.length} orphaned package(s) found`,
+				[
+					"Remove all orphans",
+					"Select individually",
+					"Cancel",
+				],
+			);
+
+			if (!choice || choice === "Cancel") return;
+
+			if (choice === "Remove all orphans") {
+				const confirm = await ctx.ui.confirm(
+					`Remove ${orphaned.length} orphaned package(s)?`,
+					orphanLabels.join("\n"),
+				);
+				if (!confirm) return;
+
+				const result = doUninstall(orphaned.map(e => e.name));
+				const msg = [];
+				if (result.uninstalled.length > 0) msg.push(`Removed: ${result.uninstalled.join(", ")}`);
+				if (result.failed.length > 0) msg.push(`Failed: ${result.failed.join("; ")}`);
+				ctx.ui.notify(msg.join("\n") || "Done.", result.failed.length > 0 ? "warning" : "info");
+				return;
+			}
+
+			// Select individually — multi-step selection
+			const toRemove: string[] = [];
+			for (const e of orphaned) {
+				const pick = await ctx.ui.select(
+					`${e.npmPackage} @${e.version ?? "?"}`,
+					["Remove", "Keep", "Done selecting"],
+				);
+				if (pick === "Done selecting") break;
+				if (pick === "Remove") toRemove.push(e.name);
+			}
+
+			if (toRemove.length === 0) {
+				ctx.ui.notify("No packages selected for removal.", "info");
+				return;
+			}
+
+			const result = doUninstall(toRemove);
+			const msg = [];
+			if (result.uninstalled.length > 0) msg.push(`Removed: ${result.uninstalled.join(", ")}`);
+			if (result.failed.length > 0) msg.push(`Failed: ${result.failed.join("; ")}`);
+			ctx.ui.notify(msg.join("\n") || "Done.", result.failed.length > 0 ? "warning" : "info");
 		},
 	});
 }
