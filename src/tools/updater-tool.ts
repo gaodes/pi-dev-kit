@@ -1,3 +1,6 @@
+import { spawnSync } from "node:child_process";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import type {
 	AgentToolResult,
 	ExtensionAPI,
@@ -5,12 +8,9 @@ import type {
 	Theme,
 	ToolRenderResultOptions,
 } from "@mariozechner/pi-coding-agent";
-import { VERSION, BorderedLoader, getAgentDir } from "@mariozechner/pi-coding-agent";
+import { BorderedLoader, getAgentDir, VERSION } from "@mariozechner/pi-coding-agent";
 import { Text } from "@mariozechner/pi-tui";
 import { Type } from "typebox";
-import { spawnSync } from "node:child_process";
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { join, dirname } from "node:path";
 
 // --- Constants ---
 
@@ -25,16 +25,24 @@ const ENV_OFFLINE = "PI_OFFLINE";
 
 const UpdaterParams = Type.Object({
 	action: Type.Optional(
-		Type.Union([
-			Type.Literal("check"),
-			Type.Literal("install"),
-			Type.Literal("dismiss"),
-			Type.Literal("status"),
-			Type.Literal("cache"),
-		], { description: "Action: check (fetch latest from npm), install (run npm update), dismiss (skip this version), status (current vs cached latest), cache (show cache contents). Default: status" }),
+		Type.Union(
+			[
+				Type.Literal("check"),
+				Type.Literal("install"),
+				Type.Literal("dismiss"),
+				Type.Literal("status"),
+				Type.Literal("cache"),
+			],
+			{
+				description:
+					"Action: check (fetch latest from npm), install (run npm update), dismiss (skip this version), status (current vs cached latest), cache (show cache contents). Default: status",
+			},
+		),
 	),
 	version: Type.Optional(
-		Type.String({ description: "Target version for install/dismiss actions. If omitted, uses the latest cached or fetched version." }),
+		Type.String({
+			description: "Target version for install/dismiss actions. If omitted, uses the latest cached or fetched version.",
+		}),
 	),
 });
 type UpdaterParamsType = {
@@ -72,7 +80,7 @@ function readCache(): VersionCache | undefined {
 function writeCache(cache: VersionCache) {
 	try {
 		mkdirSync(dirname(CACHE_FILE), { recursive: true });
-		writeFileSync(CACHE_FILE, JSON.stringify(cache) + "\n");
+		writeFileSync(CACHE_FILE, `${JSON.stringify(cache)}\n`);
 	} catch {}
 }
 
@@ -100,14 +108,14 @@ function parseVersion(v: string): [number, number, number] | undefined {
 	const parts = v.trim().split(".");
 	if (parts.length !== 3) return undefined;
 	const nums = parts.map(Number);
-	if (nums.some(isNaN)) return undefined;
+	if (nums.some(Number.isNaN)) return undefined;
 	return nums as [number, number, number];
 }
 
 function isNewer(latest: string, current: string): boolean {
 	const l = parseVersion(latest);
 	const c = parseVersion(current);
-	if (!l || !c) return false;
+	if (!(l && c)) return false;
 	if (l[0] !== c[0]) return l[0] > c[0];
 	if (l[1] !== c[1]) return l[1] > c[1];
 	return l[2] > c[2];
@@ -163,10 +171,7 @@ async function doInstall(pi: ExtensionAPI, ctx: ExtensionContext, latest: string
 		pi.exec(cmd.program, cmd.args, { timeout: 120_000 })
 			.then((result) => {
 				if (result.code !== 0) {
-					ctx.ui.notify(
-						`Update failed (exit ${result.code}): ${result.stderr || result.stdout}`,
-						"error",
-					);
+					ctx.ui.notify(`Update failed (exit ${result.code}): ${result.stderr || result.stdout}`, "error");
 					done(false);
 				} else {
 					done(true);
@@ -259,10 +264,7 @@ async function showUpdatePrompt(pi: ExtensionAPI, ctx: ExtensionContext, latest:
 		: "Tip: run `pi --no-session` to continue without a saved session.";
 
 	if (!canAutoRestart(ctx)) {
-		ctx.ui.notify(
-			`Updated to ${latest}! Please restart pi.\n${restartTip}`,
-			"info",
-		);
+		ctx.ui.notify(`Updated to ${latest}! Please restart pi.\n${restartTip}`, "info");
 		return;
 	}
 
@@ -275,10 +277,7 @@ async function showUpdatePrompt(pi: ExtensionAPI, ctx: ExtensionContext, latest:
 		return;
 	}
 
-	ctx.ui.notify(
-		`Updated to ${latest}! Auto-restart failed. Please restart pi manually.\n${restartTip}`,
-		"error",
-	);
+	ctx.ui.notify(`Updated to ${latest}! Auto-restart failed. Please restart pi manually.\n${restartTip}`, "error");
 }
 
 async function maybeShowAutoPrompt(pi: ExtensionAPI, ctx: ExtensionContext, latest: string) {
@@ -354,33 +353,27 @@ export function setupUpdaterTool(pi: ExtensionAPI) {
 				if (!restart) return;
 
 				const ok = await restartPi(pi, ctx);
-				if (ok) { ctx.shutdown(); return; }
+				if (ok) {
+					ctx.shutdown();
+					return;
+				}
 				ctx.ui.notify("Test restart failed.", "error");
 				return;
 			}
 
 			if (isOffline()) {
-				ctx.ui.notify(
-					"PI_OFFLINE is set. Disable it to check for updates.",
-					"warning",
-				);
+				ctx.ui.notify("PI_OFFLINE is set. Disable it to check for updates.", "warning");
 				return;
 			}
 
-			const latest = await ctx.ui.custom<string | null>(
-				(tui, theme, _kb, done) => {
-					const loader = new BorderedLoader(
-						tui,
-						theme,
-						"Checking for updates...",
-					);
-					loader.onAbort = () => done(null);
-					fetchLatestVersion()
-						.then((v) => done(v ?? null))
-						.catch(() => done(null));
-					return loader;
-				},
-			);
+			const latest = await ctx.ui.custom<string | null>((tui, theme, _kb, done) => {
+				const loader = new BorderedLoader(tui, theme, "Checking for updates...");
+				loader.onAbort = () => done(null);
+				fetchLatestVersion()
+					.then((v) => done(v ?? null))
+					.catch(() => done(null));
+				return loader;
+			});
 
 			if (!latest) {
 				ctx.ui.notify("Could not reach npm registry.", "error");
@@ -465,7 +458,9 @@ export function setupUpdaterTool(pi: ExtensionAPI) {
 					const targetVersion = params.version ?? cache?.latestVersion;
 					if (!targetVersion) {
 						return {
-							content: [{ type: "text", text: "No target version specified and no cached latest version. Run 'check' first." }],
+							content: [
+								{ type: "text", text: "No target version specified and no cached latest version. Run 'check' first." },
+							],
 							details: { currentVersion: VERSION, action: "install", result: "no_target" },
 						};
 					}
@@ -477,12 +472,14 @@ export function setupUpdaterTool(pi: ExtensionAPI) {
 					const success = !spawnResult.error && spawnResult.status === 0;
 					const output = (spawnResult.stderr || spawnResult.stdout || "").trim();
 					return {
-						content: [{
-							type: "text",
-							text: success
-								? `Successfully installed ${targetVersion}. Restart pi to use the new version.`
-								: `Install failed: ${output}`,
-						}],
+						content: [
+							{
+								type: "text",
+								text: success
+									? `Successfully installed ${targetVersion}. Restart pi to use the new version.`
+									: `Install failed: ${output}`,
+							},
+						],
 						details: {
 							currentVersion: VERSION,
 							latestVersion: targetVersion,
@@ -502,7 +499,9 @@ export function setupUpdaterTool(pi: ExtensionAPI) {
 					}
 					dismissVersion(targetVersion);
 					return {
-						content: [{ type: "text", text: `Dismissed version ${targetVersion}. You will not be prompted for it again.` }],
+						content: [
+							{ type: "text", text: `Dismissed version ${targetVersion}. You will not be prompted for it again.` },
+						],
 						details: {
 							currentVersion: VERSION,
 							latestVersion: cache?.latestVersion,
@@ -521,7 +520,12 @@ export function setupUpdaterTool(pi: ExtensionAPI) {
 						};
 					}
 					return {
-						content: [{ type: "text", text: `Cache: latest=${cache.latestVersion}, dismissed=${cache.dismissedVersion ?? "none"}, checked=${cache.checkedAt ?? "unknown"}` }],
+						content: [
+							{
+								type: "text",
+								text: `Cache: latest=${cache.latestVersion}, dismissed=${cache.dismissedVersion ?? "none"}, checked=${cache.checkedAt ?? "unknown"}`,
+							},
+						],
 						details: {
 							currentVersion: VERSION,
 							latestVersion: cache.latestVersion,
@@ -531,8 +535,6 @@ export function setupUpdaterTool(pi: ExtensionAPI) {
 						},
 					};
 				}
-
-				case "status":
 				default: {
 					const updateAvailable = cache ? isNewer(cache.latestVersion, VERSION) : false;
 					let text = `Current: ${VERSION}`;
@@ -565,11 +567,7 @@ export function setupUpdaterTool(pi: ExtensionAPI) {
 			return new Text(theme.fg("dim", `Pi Updater: ${action}`), 0, 0);
 		},
 
-		renderResult(
-			result: AgentToolResult<UpdaterDetails>,
-			_options: ToolRenderResultOptions,
-			theme: Theme,
-		) {
+		renderResult(result: AgentToolResult<UpdaterDetails>, _options: ToolRenderResultOptions, theme: Theme) {
 			const { details } = result;
 			const textBlock = result.content.find((c) => c.type === "text");
 			const msg = (textBlock?.type === "text" && textBlock.text) || "Done";
@@ -583,11 +581,7 @@ export function setupUpdaterTool(pi: ExtensionAPI) {
 			}
 
 			if (details.updateAvailable) {
-				return new Text(
-					theme.fg("warning", `↑ ${details.currentVersion} → ${details.latestVersion}`),
-					0,
-					0,
-				);
+				return new Text(theme.fg("warning", `↑ ${details.currentVersion} → ${details.latestVersion}`), 0, 0);
 			}
 
 			return new Text(theme.fg("accent", msg), 0, 0);

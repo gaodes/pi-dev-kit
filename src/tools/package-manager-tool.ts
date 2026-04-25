@@ -1,5 +1,9 @@
+import { execSync } from "node:child_process";
 import * as fs from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
 import * as path from "node:path";
+import { join } from "node:path";
 import type {
 	AgentToolResult,
 	ExtensionAPI,
@@ -9,10 +13,6 @@ import type {
 } from "@mariozechner/pi-coding-agent";
 import { Text } from "@mariozechner/pi-tui";
 import { Type } from "typebox";
-import { readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { homedir } from "node:os";
-import { execSync } from "node:child_process";
 
 // ──────────────────────────────────────────────
 // Tool 1: detect_package_manager
@@ -51,8 +51,7 @@ function setupDetectPackageManagerTool(pi: ExtensionAPI) {
 	pi.registerTool<typeof DetectParams, DetectDetails>({
 		name: "detect_package_manager",
 		label: "Package Manager",
-		description:
-			"Detect the package manager used in the current project by checking lockfiles and package.json",
+		description: "Detect the package manager used in the current project by checking lockfiles and package.json",
 		promptSnippet: "Detect the package manager for this project",
 		promptGuidelines: [
 			"Use detect_package_manager when you need to know which package manager (npm, yarn, pnpm, bun) the project uses",
@@ -119,11 +118,7 @@ function setupDetectPackageManagerTool(pi: ExtensionAPI) {
 			}
 
 			const pm = declaredPm || lockfilePm || "npm";
-			const source: DetectDetails["source"] = declaredPm
-				? "packageManager"
-				: lockfilePm
-					? "lockfile"
-					: "default";
+			const source: DetectDetails["source"] = declaredPm ? "packageManager" : lockfilePm ? "lockfile" : "default";
 			const detectedFrom = declaredPmFrom || lockfileFrom || cwd;
 			const fallback = { install: `${pm} install`, run: pm };
 			const commands = COMMANDS[pm] ?? fallback;
@@ -156,11 +151,7 @@ function setupDetectPackageManagerTool(pi: ExtensionAPI) {
 			return new Text(theme.fg("dim", "Detect Package Manager"), 0, 0);
 		},
 
-		renderResult(
-			result: AgentToolResult<DetectDetails>,
-			_options: ToolRenderResultOptions,
-			theme: Theme,
-		): Text {
+		renderResult(result: AgentToolResult<DetectDetails>, _options: ToolRenderResultOptions, theme: Theme): Text {
 			const { details } = result;
 			if (!details?.packageManager) {
 				const text = result.content[0];
@@ -185,15 +176,15 @@ const SETTINGS_PATH = join(homedir(), ".pi/agent/settings.json");
 
 const PiPkgParams = Type.Object({
 	action: Type.Optional(
-		Type.Union([
-			Type.Literal("scan"),
-			Type.Literal("uninstall"),
-			Type.Literal("reinstall"),
-			Type.Literal("orphans"),
-		], { description: "Action: scan (list all packages with status), uninstall (remove packages), reinstall (re-register orphans), orphans (find untracked npm packages). Default: scan" }),
+		Type.Union([Type.Literal("scan"), Type.Literal("uninstall"), Type.Literal("reinstall"), Type.Literal("orphans")], {
+			description:
+				"Action: scan (list all packages with status), uninstall (remove packages), reinstall (re-register orphans), orphans (find untracked npm packages). Default: scan",
+		}),
 	),
 	packages: Type.Optional(
-		Type.Array(Type.String(), { description: "Package names (npm:-prefixed). Required for uninstall and reinstall actions." }),
+		Type.Array(Type.String(), {
+			description: "Package names (npm:-prefixed). Required for uninstall and reinstall actions.",
+		}),
 	),
 });
 type PiPkgParamsType = {
@@ -229,7 +220,7 @@ function readPiSettings(): { packages: string[] } {
 }
 
 function writePiSettings(settings: { packages: string[] }) {
-	writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2) + "\n");
+	writeFileSync(SETTINGS_PATH, `${JSON.stringify(settings, null, 2)}\n`);
 }
 
 function getNpmGlobalPackages(): Map<string, string> {
@@ -270,7 +261,7 @@ function scanPiPackages(): PackageEntry[] {
 		}
 	}
 
-	const settingsNpmNames = new Set(settings.packages.filter(p => p.startsWith("npm:")).map(p => p.slice(4)));
+	const settingsNpmNames = new Set(settings.packages.filter((p) => p.startsWith("npm:")).map((p) => p.slice(4)));
 	for (const [npmName, version] of npmGlobals) {
 		if (!settingsNpmNames.has(npmName) && isLikelyPiPackage(npmName)) {
 			entries.push({ name: `npm:${npmName}`, npmPackage: npmName, version, status: "orphaned" });
@@ -290,7 +281,7 @@ function doUninstall(packageNames: string[]): { uninstalled: string[]; failed: s
 			failed.push(`${pkg} — not found in settings`);
 			continue;
 		}
-		settings.packages = settings.packages.filter(p => p !== pkg);
+		settings.packages = settings.packages.filter((p) => p !== pkg);
 
 		const npmName = extractNpmName(pkg);
 		if (npmName) {
@@ -369,9 +360,9 @@ function setupPiPackageManagerTool(pi: ExtensionAPI) {
 			switch (action) {
 				case "scan": {
 					const entries = scanPiPackages();
-					const installed = entries.filter(e => e.status === "installed");
-					const registered = entries.filter(e => e.status === "registered");
-					const orphaned = entries.filter(e => e.status === "orphaned");
+					const installed = entries.filter((e) => e.status === "installed");
+					const registered = entries.filter((e) => e.status === "registered");
+					const orphaned = entries.filter((e) => e.status === "orphaned");
 
 					let text = `Pi Package Scan (${entries.length} total)\n─────────────────────────\n`;
 					if (installed.length > 0) {
@@ -389,12 +380,18 @@ function setupPiPackageManagerTool(pi: ExtensionAPI) {
 
 					return {
 						content: [{ type: "text", text }],
-						details: { action: "scan", total: entries.length, installed: installed.length, registered: registered.length, orphaned: orphaned.length },
+						details: {
+							action: "scan",
+							total: entries.length,
+							installed: installed.length,
+							registered: registered.length,
+							orphaned: orphaned.length,
+						},
 					};
 				}
 
 				case "orphans": {
-					const entries = scanPiPackages().filter(e => e.status === "orphaned");
+					const entries = scanPiPackages().filter((e) => e.status === "orphaned");
 					if (entries.length === 0) {
 						return {
 							content: [{ type: "text", text: "No orphaned Pi packages found." }],
@@ -403,11 +400,17 @@ function setupPiPackageManagerTool(pi: ExtensionAPI) {
 					}
 					let text = `Orphaned Pi packages (${entries.length}):\n`;
 					for (const e of entries) text += `  ${e.npmPackage} @${e.version ?? "?"}\n`;
-					text += `\nTo remove: pi_package_manager action "uninstall" packages: [${entries.map(e => `"${e.name}"`).join(", ")}]`;
-					text += `\nTo re-register: pi_package_manager action "reinstall" packages: [${entries.map(e => `"${e.name}"`).join(", ")}]`;
+					text += `\nTo remove: pi_package_manager action "uninstall" packages: [${entries.map((e) => `"${e.name}"`).join(", ")}]`;
+					text += `\nTo re-register: pi_package_manager action "reinstall" packages: [${entries.map((e) => `"${e.name}"`).join(", ")}]`;
 					return {
 						content: [{ type: "text", text }],
-						details: { action: "orphans", total: entries.length, installed: 0, registered: 0, orphaned: entries.length },
+						details: {
+							action: "orphans",
+							total: entries.length,
+							installed: 0,
+							registered: 0,
+							orphaned: entries.length,
+						},
 					};
 				}
 
@@ -415,8 +418,21 @@ function setupPiPackageManagerTool(pi: ExtensionAPI) {
 					const targets = params.packages ?? [];
 					if (targets.length === 0) {
 						return {
-							content: [{ type: "text", text: "No packages specified. Provide orphaned package names in the 'packages' parameter." }],
-							details: { action: "reinstall", total: 0, installed: 0, registered: 0, orphaned: 0, uninstalled: [], failed: [] },
+							content: [
+								{
+									type: "text",
+									text: "No packages specified. Provide orphaned package names in the 'packages' parameter.",
+								},
+							],
+							details: {
+								action: "reinstall",
+								total: 0,
+								installed: 0,
+								registered: 0,
+								orphaned: 0,
+								uninstalled: [],
+								failed: [],
+							},
 						};
 					}
 					const result = doReinstall(targets);
@@ -425,7 +441,15 @@ function setupPiPackageManagerTool(pi: ExtensionAPI) {
 					if (result.failed.length > 0) text += `  Failed: ${result.failed.join("; ")}\n`;
 					return {
 						content: [{ type: "text", text }],
-						details: { action: "reinstall", total: targets.length, installed: 0, registered: 0, orphaned: 0, uninstalled: result.reinstalled, failed: result.failed },
+						details: {
+							action: "reinstall",
+							total: targets.length,
+							installed: 0,
+							registered: 0,
+							orphaned: 0,
+							uninstalled: result.reinstalled,
+							failed: result.failed,
+						},
 					};
 				}
 
@@ -433,8 +457,18 @@ function setupPiPackageManagerTool(pi: ExtensionAPI) {
 					const targets = params.packages ?? [];
 					if (targets.length === 0) {
 						return {
-							content: [{ type: "text", text: "No packages specified. Provide package names in the 'packages' parameter." }],
-							details: { action: "uninstall", total: 0, installed: 0, registered: 0, orphaned: 0, uninstalled: [], failed: [] },
+							content: [
+								{ type: "text", text: "No packages specified. Provide package names in the 'packages' parameter." },
+							],
+							details: {
+								action: "uninstall",
+								total: 0,
+								installed: 0,
+								registered: 0,
+								orphaned: 0,
+								uninstalled: [],
+								failed: [],
+							},
 						};
 					}
 					const result = doUninstall(targets);
@@ -443,7 +477,15 @@ function setupPiPackageManagerTool(pi: ExtensionAPI) {
 					if (result.failed.length > 0) text += `  Failed: ${result.failed.join("; ")}\n`;
 					return {
 						content: [{ type: "text", text }],
-						details: { action: "uninstall", total: targets.length, installed: 0, registered: 0, orphaned: 0, uninstalled: result.uninstalled, failed: result.failed },
+						details: {
+							action: "uninstall",
+							total: targets.length,
+							installed: 0,
+							registered: 0,
+							orphaned: 0,
+							uninstalled: result.uninstalled,
+							failed: result.failed,
+						},
 					};
 				}
 
@@ -458,22 +500,21 @@ function setupPiPackageManagerTool(pi: ExtensionAPI) {
 
 		renderCall(args: PiPkgParamsType, theme: Theme) {
 			const action = args.action ?? "scan";
-			const suffix = (action === "uninstall" || action === "reinstall") && args.packages?.length
-				? ` (${args.packages.length} packages)` : "";
+			const suffix =
+				(action === "uninstall" || action === "reinstall") && args.packages?.length
+					? ` (${args.packages.length} packages)`
+					: "";
 			return new Text(theme.fg("dim", `Pi Package Manager: ${action}${suffix}`), 0, 0);
 		},
 
-		renderResult(
-			result: AgentToolResult<PiPkgDetails>,
-			_options: ToolRenderResultOptions,
-			theme: Theme,
-		) {
+		renderResult(result: AgentToolResult<PiPkgDetails>, _options: ToolRenderResultOptions, theme: Theme) {
 			const { details } = result;
 			const textBlock = result.content.find((c) => c.type === "text");
 			const msg = (textBlock?.type === "text" && textBlock.text) || "Done";
 			if (!details) return new Text(theme.fg("dim", msg), 0, 0);
 			if (details.failed && details.failed.length > 0) return new Text(theme.fg("error", msg), 0, 0);
-			if (details.orphaned > 0) return new Text(theme.fg("warning", `${details.total} packages, ${details.orphaned} orphaned`), 0, 0);
+			if (details.orphaned > 0)
+				return new Text(theme.fg("warning", `${details.total} packages, ${details.orphaned} orphaned`), 0, 0);
 			return new Text(theme.fg("accent", msg), 0, 0);
 		},
 	});
@@ -484,9 +525,9 @@ function setupPiPackageManagerTool(pi: ExtensionAPI) {
 		description: "Scan and manage installed Pi packages",
 		handler: async (_rawArgs, ctx) => {
 			const entries = scanPiPackages();
-			const installed = entries.filter(e => e.status === "installed");
-			const registered = entries.filter(e => e.status === "registered");
-			const orphaned = entries.filter(e => e.status === "orphaned");
+			const installed = entries.filter((e) => e.status === "installed");
+			const registered = entries.filter((e) => e.status === "registered");
+			const orphaned = entries.filter((e) => e.status === "orphaned");
 
 			if (entries.length === 0) {
 				ctx.ui.notify("No Pi packages found in settings.", "info");
@@ -529,7 +570,7 @@ function setupPiPackageManagerTool(pi: ExtensionAPI) {
 
 			// --- Remove orphans individually ---
 			if (choice.startsWith("Remove orphans individually")) {
-				const orphanLabels = orphaned.map(e => `${e.npmPackage} @${e.version ?? "?"}`);
+				const orphanLabels = orphaned.map((e) => `${e.npmPackage} @${e.version ?? "?"}`);
 				const selected = await ctx.ui.select("Select orphan to remove", [...orphanLabels, "Cancel"]);
 				if (!selected || selected === "Cancel") return;
 				const target = orphaned[orphanLabels.indexOf(selected)];
@@ -538,7 +579,9 @@ function setupPiPackageManagerTool(pi: ExtensionAPI) {
 				if (!confirm) return;
 				const result = doUninstall([target.name]);
 				ctx.ui.notify(
-					result.uninstalled.length > 0 ? `Removed: ${result.uninstalled.join(", ")}` : `Failed: ${result.failed.join("; ")}`,
+					result.uninstalled.length > 0
+						? `Removed: ${result.uninstalled.join(", ")}`
+						: `Failed: ${result.failed.join("; ")}`,
 					result.failed.length > 0 ? "error" : "info",
 				);
 				return;
@@ -546,10 +589,10 @@ function setupPiPackageManagerTool(pi: ExtensionAPI) {
 
 			// --- Remove all orphans ---
 			if (choice.startsWith("Remove all orphans")) {
-				const orphanLabels = orphaned.map(e => `${e.npmPackage} @${e.version ?? "?"}`);
+				const orphanLabels = orphaned.map((e) => `${e.npmPackage} @${e.version ?? "?"}`);
 				const confirm = await ctx.ui.confirm(`Remove ${orphaned.length} orphaned package(s)?`, orphanLabels.join("\n"));
 				if (!confirm) return;
-				const result = doUninstall(orphaned.map(e => e.name));
+				const result = doUninstall(orphaned.map((e) => e.name));
 				const msg = [];
 				if (result.uninstalled.length > 0) msg.push(`Removed: ${result.uninstalled.join(", ")}`);
 				if (result.failed.length > 0) msg.push(`Failed: ${result.failed.join("; ")}`);
@@ -559,14 +602,16 @@ function setupPiPackageManagerTool(pi: ExtensionAPI) {
 
 			// --- Re-register orphans individually ---
 			if (choice.startsWith("Re-register orphans individually")) {
-				const orphanLabels = orphaned.map(e => `${e.npmPackage} @${e.version ?? "?"}`);
+				const orphanLabels = orphaned.map((e) => `${e.npmPackage} @${e.version ?? "?"}`);
 				const selected = await ctx.ui.select("Select orphan to re-register", [...orphanLabels, "Cancel"]);
 				if (!selected || selected === "Cancel") return;
 				const target = orphaned[orphanLabels.indexOf(selected)];
 				if (!target) return;
 				const result = doReinstall([target.name]);
 				ctx.ui.notify(
-					result.reinstalled.length > 0 ? `Re-registered: ${result.reinstalled.join(", ")}` : `Failed: ${result.failed.join("; ")}`,
+					result.reinstalled.length > 0
+						? `Re-registered: ${result.reinstalled.join(", ")}`
+						: `Failed: ${result.failed.join("; ")}`,
 					result.failed.length > 0 ? "error" : "info",
 				);
 				return;
@@ -574,10 +619,13 @@ function setupPiPackageManagerTool(pi: ExtensionAPI) {
 
 			// --- Re-register all orphans ---
 			if (choice.startsWith("Re-register all orphans")) {
-				const orphanLabels = orphaned.map(e => `${e.npmPackage} @${e.version ?? "?"}`);
-				const confirm = await ctx.ui.confirm(`Re-register ${orphaned.length} orphaned package(s) in settings.json?`, orphanLabels.join("\n"));
+				const orphanLabels = orphaned.map((e) => `${e.npmPackage} @${e.version ?? "?"}`);
+				const confirm = await ctx.ui.confirm(
+					`Re-register ${orphaned.length} orphaned package(s) in settings.json?`,
+					orphanLabels.join("\n"),
+				);
 				if (!confirm) return;
-				const result = doReinstall(orphaned.map(e => e.name));
+				const result = doReinstall(orphaned.map((e) => e.name));
 				const msg = [];
 				if (result.reinstalled.length > 0) msg.push(`Re-registered: ${result.reinstalled.join(", ")}`);
 				if (result.failed.length > 0) msg.push(`Failed: ${result.failed.join("; ")}`);
@@ -587,16 +635,21 @@ function setupPiPackageManagerTool(pi: ExtensionAPI) {
 
 			// --- Remove installed package ---
 			if (choice.startsWith("Remove installed package")) {
-				const trackedLabels = tracked.map(e => e.version ? `${e.name} @${e.version}` : e.name);
+				const trackedLabels = tracked.map((e) => (e.version ? `${e.name} @${e.version}` : e.name));
 				const selected = await ctx.ui.select("Select package to uninstall", [...trackedLabels, "Cancel"]);
 				if (!selected || selected === "Cancel") return;
 				const target = tracked[trackedLabels.indexOf(selected)];
 				if (!target) return;
-				const confirm = await ctx.ui.confirm(`Uninstall ${target.name}?`, "This will remove it from settings and run npm uninstall -g.");
+				const confirm = await ctx.ui.confirm(
+					`Uninstall ${target.name}?`,
+					"This will remove it from settings and run npm uninstall -g.",
+				);
 				if (!confirm) return;
 				const result = doUninstall([target.name]);
 				ctx.ui.notify(
-					result.uninstalled.length > 0 ? `Uninstalled: ${result.uninstalled.join(", ")}` : `Failed: ${result.failed.join("; ")}`,
+					result.uninstalled.length > 0
+						? `Uninstalled: ${result.uninstalled.join(", ")}`
+						: `Failed: ${result.failed.join("; ")}`,
 					result.failed.length > 0 ? "error" : "info",
 				);
 				return;

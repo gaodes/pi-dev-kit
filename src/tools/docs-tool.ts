@@ -39,8 +39,7 @@ export function setupDocsTool(pi: ExtensionAPI) {
 	pi.registerTool<typeof DocsParamsSchema, DocsDetails>({
 		name: "pi_docs",
 		label: "Pi Documentation",
-		description:
-			"List Pi markdown documentation files (README, docs/, examples/)",
+		description: "List Pi markdown documentation files (README, docs/, examples/)",
 
 		promptSnippet: "List Pi documentation files",
 		promptGuidelines: [
@@ -89,14 +88,10 @@ export function setupDocsTool(pi: ExtensionAPI) {
 			}
 
 			if (docFiles.length === 0) {
-				throw new Error(
-					`No markdown documentation found in Pi installation at ${piPath}`,
-				);
+				throw new Error(`No markdown documentation found in Pi installation at ${piPath}`);
 			}
 
-			const lines = docFiles.map(
-				(rel) => `${path.join(piPath, rel)} (${rel})`,
-			);
+			const lines = docFiles.map((rel) => `${path.join(piPath, rel)} (${rel})`);
 			const message = `${docFiles.length} markdown files:\n${lines.join("\n")}`;
 
 			return {
@@ -112,27 +107,17 @@ export function setupDocsTool(pi: ExtensionAPI) {
 			return new Text(theme.fg("dim", "Pi Docs"), 0, 0);
 		},
 
-		renderResult(
-			result: AgentToolResult<DocsDetails>,
-			_options: ToolRenderResultOptions,
-			theme: Theme,
-		) {
+		renderResult(result: AgentToolResult<DocsDetails>, _options: ToolRenderResultOptions, theme: Theme) {
 			const { details } = result;
 
 			if (!details?.docFiles) {
 				const text = result.content[0];
-				return new Text(
-					text?.type === "text" && text.text ? text.text : "No result",
-					0,
-					0,
-				);
+				return new Text(text?.type === "text" && text.text ? text.text : "No result", 0, 0);
 			}
 
 			const { docFiles } = details;
 			const lines: string[] = [];
-			lines.push(
-				theme.fg("accent", `${docFiles.length} markdown files:`),
-			);
+			lines.push(theme.fg("accent", `${docFiles.length} markdown files:`));
 			for (const rel of docFiles) {
 				lines.push(theme.fg("dim", `  ${rel}`));
 			}

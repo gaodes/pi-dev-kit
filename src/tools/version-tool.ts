@@ -45,25 +45,16 @@ export function setupVersionTool(pi: ExtensionAPI) {
 			return new Text(theme.fg("dim", "Pi Version"), 0, 0);
 		},
 
-		renderResult(
-			result: AgentToolResult<VersionDetails>,
-			_options: ToolRenderResultOptions,
-			theme: Theme,
-		): Text {
+		renderResult(result: AgentToolResult<VersionDetails>, _options: ToolRenderResultOptions, theme: Theme): Text {
 			const { details } = result;
 
 			if (!details?.version) {
 				const textBlock = result.content.find((c) => c.type === "text");
-				const msg =
-					(textBlock?.type === "text" && textBlock.text) || "Unknown version";
+				const msg = (textBlock?.type === "text" && textBlock.text) || "Unknown version";
 				return new Text(theme.fg("error", msg), 0, 0);
 			}
 
-			return new Text(
-				theme.fg("accent", `Pi version: ${details.version}`),
-				0,
-				0,
-			);
+			return new Text(theme.fg("accent", `Pi version: ${details.version}`), 0, 0);
 		},
 	});
 }

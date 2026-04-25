@@ -18,8 +18,7 @@ const GITHUB_RAW_CHANGELOG_URL =
 const ChangelogParamsSchema = Type.Object({
 	version: Type.Optional(
 		Type.String({
-			description:
-				"Specific version to get changelog for. If not provided, returns latest version.",
+			description: "Specific version to get changelog for. If not provided, returns latest version.",
 		}),
 	),
 });
@@ -78,12 +77,9 @@ function parseChangelogEntries(changelogContent: string): ParsedChangelog {
 		const contentLines = lines.slice(entry.lineStart + 1, entry.lineEnd);
 		const rawContent = contentLines.join("\n").trim();
 
-		const cleanContent = rawContent
-			.replace(/^-+$|^=+$|^\*+$|^#+$/gm, "")
-			.trim();
+		const cleanContent = rawContent.replace(/^-+$|^=+$|^\*+$|^#+$/gm, "").trim();
 		if (!cleanContent || cleanContent.length < 10) {
-			entry.content =
-				"[Empty changelog entry - no details provided for this version]";
+			entry.content = "[Empty changelog entry - no details provided for this version]";
 		} else {
 			entry.content = rawContent;
 		}
@@ -92,10 +88,7 @@ function parseChangelogEntries(changelogContent: string): ParsedChangelog {
 	return { entries };
 }
 
-function findChangelogEntry(
-	changelogContent: string,
-	requestedVersion?: string,
-): ChangelogEntry {
+function findChangelogEntry(changelogContent: string, requestedVersion?: string): ChangelogEntry {
 	const { entries } = parseChangelogEntries(changelogContent);
 	if (entries.length === 0) {
 		throw new Error("No version entries found in changelog");
@@ -235,20 +228,12 @@ export function setupChangelogTool(pi: ExtensionAPI) {
 			return new Text(theme.fg("dim", `Pi Changelog: ${label}`), 0, 0);
 		},
 
-		renderResult(
-			result: AgentToolResult<ChangelogDetails>,
-			_options: ToolRenderResultOptions,
-			theme: Theme,
-		) {
+		renderResult(result: AgentToolResult<ChangelogDetails>, _options: ToolRenderResultOptions, theme: Theme) {
 			const { details } = result;
 
 			if (!details?.changelog) {
 				const text = result.content[0];
-				return new Text(
-					text?.type === "text" && text.text ? text.text : "No result",
-					0,
-					0,
-				);
+				return new Text(text?.type === "text" && text.text ? text.text : "No result", 0, 0);
 			}
 
 			const { changelog, source } = details;
@@ -268,14 +253,10 @@ export function setupChangelogTool(pi: ExtensionAPI) {
 	});
 
 	// pi_changelog_versions — list all available versions
-	pi.registerTool<
-		typeof ChangelogVersionsParamsSchema,
-		ChangelogVersionsDetails
-	>({
+	pi.registerTool<typeof ChangelogVersionsParamsSchema, ChangelogVersionsDetails>({
 		name: "pi_changelog_versions",
 		label: "Pi Changelog Versions",
-		description:
-			"List all available Pi changelog versions.",
+		description: "List all available Pi changelog versions.",
 
 		promptSnippet: "List Pi changelog versions",
 		promptGuidelines: [
@@ -329,27 +310,17 @@ export function setupChangelogTool(pi: ExtensionAPI) {
 			return new Text(theme.fg("dim", "Pi Changelog Versions"), 0, 0);
 		},
 
-		renderResult(
-			result: AgentToolResult<ChangelogVersionsDetails>,
-			_options: ToolRenderResultOptions,
-			theme: Theme,
-		) {
+		renderResult(result: AgentToolResult<ChangelogVersionsDetails>, _options: ToolRenderResultOptions, theme: Theme) {
 			const { details } = result;
 
 			if (!details?.versions) {
 				const text = result.content[0];
-				return new Text(
-					text?.type === "text" && text.text ? text.text : "No result",
-					0,
-					0,
-				);
+				return new Text(text?.type === "text" && text.text ? text.text : "No result", 0, 0);
 			}
 
 			const { versions, source } = details;
 			const lines: string[] = [];
-			lines.push(
-				theme.fg("accent", `${versions.length} versions (${source})`),
-			);
+			lines.push(theme.fg("accent", `${versions.length} versions (${source})`));
 
 			// Show first 10 + count of remaining
 			const shown = versions.slice(0, 10);
