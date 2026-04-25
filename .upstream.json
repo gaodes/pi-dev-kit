@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-04-24",
+  "updatedAt": "2026-04-25",
   "primary": {
     "name": "@aliou/pi-dev-kit",
     "type": "npm",
@@ -8,5 +8,15 @@
     "license": "MIT",
     "relationship": "fork",
     "upstreamVersion": "0.6.4"
-  }
+  },
+  "inspirations": [
+    {
+      "name": "pi-updater",
+      "type": "npm",
+      "url": "npm:pi-updater",
+      "license": "MIT",
+      "upstreamVersion": "0.3.1",
+      "ported": ["pi_updater tool", "/update command"]
+    }
+  ]
 }
