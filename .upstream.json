@@ -5,6 +5,7 @@
     "name": "@aliou/pi-dev-kit",
     "type": "npm",
     "url": "npm:@aliou/pi-dev-kit",
+    "repo": "https://github.com/aliou/pi-dev-kit",
     "license": "MIT",
     "relationship": "fork",
     "upstreamVersion": "0.6.4"
@@ -14,6 +15,7 @@
       "name": "pi-updater",
       "type": "npm",
       "url": "npm:pi-updater",
+      "repo": "https://github.com/tonze/pi-updater",
       "license": "MIT",
       "upstreamVersion": "0.3.1",
       "ported": ["pi_updater tool", "/update command"]
