@@ -464,98 +464,74 @@ export function setupPackageCleanerTool(pi: ExtensionAPI) {
 			if (installed.length > 0) {
 				summary += `\nInstalled (${installed.length}):\n`;
 				for (const e of installed) {
-					summary += `  \u2705 ${e.name} @${e.version ?? "?"}\n`;
+					summary += `  ✅ ${e.name} @${e.version ?? "?"}\n`;
 				}
 			}
 			if (registered.length > 0) {
 				summary += `\nRegistered (${registered.length}):\n`;
 				for (const e of registered) {
-					summary += `  \uD83D\uDCCB ${e.name}${e.version ? ` @${e.version}` : ""}\n`;
+					summary += `  📋 ${e.name}${e.version ? ` @${e.version}` : ""}\n`;
 				}
 			}
 			if (orphaned.length > 0) {
 				summary += `\nOrphaned (${orphaned.length}):\n`;
 				for (const e of orphaned) {
-					summary += `  \u26A0\uFE0F ${e.npmPackage} @${e.version ?? "?"}\n`;
+					summary += `  ⚠️ ${e.npmPackage} @${e.version ?? "?"}\n`;
 				}
 			}
 
 			ctx.ui.notify(summary, "info");
 
-			if (orphaned.length === 0) {
-				// No orphans — offer to manage installed packages
-				const allPkgs = [...installed, ...registered];
-				if (allPkgs.length === 0) {
-					ctx.ui.notify("Nothing to manage.", "info");
-					return;
-				}
+			// Build flat menu — only include actions that have targets
+			const tracked = [...installed, ...registered];
+			const options: string[] = [];
 
-				const choices = allPkgs.map(e => {
-					const label = e.version
-						? `${e.name} @${e.version}`
-						: e.name;
-					return label;
-				});
-
-				const toRemove = await ctx.ui.select(
-					"Select packages to uninstall",
-					[...choices, "Cancel"],
-				);
-
-				if (!toRemove || toRemove === "Cancel") return;
-
-				// Map label back to package entry
-				const target = allPkgs.find(e => {
-					const label = e.version ? `${e.name} @${e.version}` : e.name;
-					return label === toRemove;
-				});
-				if (!target) return;
-
-				const confirm = await ctx.ui.confirm(
-					`Uninstall ${target.name}?`,
-					"This will remove it from settings and run npm uninstall -g.",
-				);
-				if (!confirm) return;
-
-				const result = doUninstall([target.name]);
-				if (result.uninstalled.length > 0) {
-					ctx.ui.notify(`Uninstalled: ${result.uninstalled.join(", ")}`, "info");
-				} else if (result.failed.length > 0) {
-					ctx.ui.notify(`Failed: ${result.failed.join("; ")}`, "error");
-				}
-				return;
+			if (orphaned.length > 0) {
+				options.push(`Remove orphans individually (${orphaned.length})`);
+				options.push(`Remove all orphans (${orphaned.length})`);
+				options.push(`Re-register orphans individually (${orphaned.length})`);
+				options.push(`Re-register all orphans (${orphaned.length})`);
 			}
+			if (tracked.length > 0) {
+				options.push(`Remove installed package (${tracked.length})`);
+			}
+			options.push("Cancel");
 
-			// Orphans found — offer cleanup
-			const orphanLabels = orphaned.map(e => `${e.npmPackage} @${e.version ?? "?"}`);
 			const choice = await ctx.ui.select(
-				`${orphaned.length} orphaned package(s) found`,
-				[
-					"Re-register all in settings",
-					"Remove all orphans",
-					"Select individually",
-					"Cancel",
-				],
+				"Pi Package Cleaner",
+				options,
 			);
 
 			if (!choice || choice === "Cancel") return;
 
-			if (choice === "Re-register all in settings") {
+			// --- Remove orphans individually ---
+			if (choice.startsWith("Remove orphans individually")) {
+				const orphanLabels = orphaned.map(e => `${e.npmPackage} @${e.version ?? "?"}`);
+				const selected = await ctx.ui.select(
+					"Select orphan to remove",
+					[...orphanLabels, "Cancel"],
+				);
+				if (!selected || selected === "Cancel") return;
+				const target = orphaned[orphanLabels.indexOf(selected)];
+				if (!target) return;
+
 				const confirm = await ctx.ui.confirm(
-					`Re-register ${orphaned.length} orphaned package(s) in settings.json?`,
-					orphanLabels.join("\n"),
+					`Remove ${target.npmPackage}?`,
+					"This will uninstall it from npm global.",
 				);
 				if (!confirm) return;
 
-				const result = doReinstall(orphaned.map(e => e.name));
-				const msg = [];
-				if (result.reinstalled.length > 0) msg.push(`Re-registered: ${result.reinstalled.join(", ")}`);
-				if (result.failed.length > 0) msg.push(`Failed: ${result.failed.join("; ")}`);
-				ctx.ui.notify(msg.join("\n") || "Done.", result.failed.length > 0 ? "warning" : "info");
+				const result = doUninstall([target.name]);
+				ctx.ui.notify(
+					result.uninstalled.length > 0 ? `Removed: ${result.uninstalled.join(", ")}` : `Failed: ${result.failed.join("; ")}`,
+					result.failed.length > 0 ? "error" : "info",
+				);
 				return;
 			}
 
-			if (choice === "Remove all orphans") {
+			// --- Remove all orphans ---
+			if (choice.startsWith("Remove all orphans")) {
+				const orphanLabels = orphaned.map(e => `${e.npmPackage} @${e.version ?? "?"}`);
 				const confirm = await ctx.ui.confirm(
 					`Remove ${orphaned.length} orphaned package(s)?`,
 					orphanLabels.join("\n"),
@@ -570,36 +546,68 @@ export function setupPackageCleanerTool(pi: ExtensionAPI) {
 				return;
 			}
 
-			// Select individually — multi-step selection
-			const toRemove: string[] = [];
-			const toReregister: string[] = [];
-			for (const e of orphaned) {
-				const pick = await ctx.ui.select(
-					`${e.npmPackage} @${e.version ?? "?"}`,
-					["Re-register", "Remove", "Keep", "Done selecting"],
+			// --- Re-register orphans individually ---
+			if (choice.startsWith("Re-register orphans individually")) {
+				const orphanLabels = orphaned.map(e => `${e.npmPackage} @${e.version ?? "?"}`);
+				const selected = await ctx.ui.select(
+					"Select orphan to re-register",
+					[...orphanLabels, "Cancel"],
 				);
-				if (pick === "Done selecting") break;
-				if (pick === "Remove") toRemove.push(e.name);
-				if (pick === "Re-register") toReregister.push(e.name);
-			}
+				if (!selected || selected === "Cancel") return;
+				const target = orphaned[orphanLabels.indexOf(selected)];
+				if (!target) return;
 
-			if (toRemove.length === 0 && toReregister.length === 0) {
-				ctx.ui.notify("No packages selected.", "info");
+				const result = doReinstall([target.name]);
+				ctx.ui.notify(
+					result.reinstalled.length > 0 ? `Re-registered: ${result.reinstalled.join(", ")}` : `Failed: ${result.failed.join("; ")}`,
+					result.failed.length > 0 ? "error" : "info",
+				);
 				return;
 			}
 
-			const msgs = [];
-			if (toReregister.length > 0) {
-				const r = doReinstall(toReregister);
-				if (r.reinstalled.length > 0) msgs.push(`Re-registered: ${r.reinstalled.join(", ")}`);
-				if (r.failed.length > 0) msgs.push(`Re-register failed: ${r.failed.join("; ")}`);
+			// --- Re-register all orphans ---
+			if (choice.startsWith("Re-register all orphans")) {
+				const orphanLabels = orphaned.map(e => `${e.npmPackage} @${e.version ?? "?"}`);
+				const confirm = await ctx.ui.confirm(
+					`Re-register ${orphaned.length} orphaned package(s) in settings.json?`,
+					orphanLabels.join("\n"),
+				);
+				if (!confirm) return;
+
+				const result = doReinstall(orphaned.map(e => e.name));
+				const msg = [];
+				if (result.reinstalled.length > 0) msg.push(`Re-registered: ${result.reinstalled.join(", ")}`);
+				if (result.failed.length > 0) msg.push(`Failed: ${result.failed.join("; ")}`);
+				ctx.ui.notify(msg.join("\n") || "Done.", result.failed.length > 0 ? "warning" : "info");
+				return;
 			}
-			if (toRemove.length > 0) {
-				const r = doUninstall(toRemove);
-				if (r.uninstalled.length > 0) msgs.push(`Removed: ${r.uninstalled.join(", ")}`);
-				if (r.failed.length > 0) msgs.push(`Remove failed: ${r.failed.join("; ")}`);
+
+			// --- Remove installed package ---
+			if (choice.startsWith("Remove installed package")) {
+				const trackedLabels = tracked.map(e => {
+					return e.version ? `${e.name} @${e.version}` : e.name;
+				});
+				const selected = await ctx.ui.select(
+					"Select package to uninstall",
+					[...trackedLabels, "Cancel"],
+				);
+				if (!selected || selected === "Cancel") return;
+				const target = tracked[trackedLabels.indexOf(selected)];
+				if (!target) return;
+
+				const confirm = await ctx.ui.confirm(
+					`Uninstall ${target.name}?`,
+					"This will remove it from settings and run npm uninstall -g.",
+				);
+				if (!confirm) return;
+
+				const result = doUninstall([target.name]);
+				ctx.ui.notify(
+					result.uninstalled.length > 0 ? `Uninstalled: ${result.uninstalled.join(", ")}` : `Failed: ${result.failed.join("; ")}`,
+					result.failed.length > 0 ? "error" : "info",
+				);
+				return;
 			}
-			ctx.ui.notify(msgs.join("\n") || "Done.", msgs.some(m => m.includes("failed")) ? "warning" : "info");
 		},
 	});
 }
