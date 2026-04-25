@@ -23,15 +23,16 @@ const PackageCleanerParams = Type.Object({
 		Type.Union([
 			Type.Literal("scan"),
 			Type.Literal("uninstall"),
+			Type.Literal("reinstall"),
 			Type.Literal("orphans"),
-		], { description: "Action: scan (list all installed packages with metadata), uninstall (remove packages by name), orphans (find npm packages not in settings). Default: scan" }),
+		], { description: "Action: scan (list all packages with status), uninstall (remove packages by name), reinstall (re-register orphaned packages back to settings), orphans (find npm packages not in settings). Default: scan" }),
 	),
 	packages: Type.Optional(
-		Type.Array(Type.String(), { description: "Package names to uninstall (npm:-prefixed). Required for uninstall action." }),
+		Type.Array(Type.String(), { description: "Package names (npm:-prefixed). Required for uninstall and reinstall actions." }),
 	),
 });
 type PackageCleanerParamsType = {
-	action?: "scan" | "uninstall" | "orphans";
+	action?: "scan" | "uninstall" | "reinstall" | "orphans";
 	packages?: string[];
 };
 
@@ -194,6 +195,25 @@ function doUninstall(packageNames: string[]): { uninstalled: string[]; failed: s
 	return { uninstalled, failed };
 }
 
+function doReinstall(packageNames: string[]): { reinstalled: string[]; failed: string[] } {
+	const settings = readSettings();
+	const reinstalled: string[] = [];
+	const failed: string[] = [];
+
+	for (const pkg of packageNames) {
+		if (settings.packages.includes(pkg)) {
+			failed.push(`${pkg} — already in settings`);
+			continue;
+		}
+
+		settings.packages.push(pkg);
+		reinstalled.push(pkg);
+	}
+
+	writeSettings(settings);
+	return { reinstalled, failed };
+}
+
 // --- Tool ---
 
 export function setupPackageCleanerTool(pi: ExtensionAPI) {
@@ -201,14 +221,15 @@ export function setupPackageCleanerTool(pi: ExtensionAPI) {
 		name: "pi_package_cleaner",
 		label: "Pi Package Cleaner",
 		description:
-			"Scan installed Pi packages, find orphaned npm packages, and bulk-uninstall packages. " +
+			"Scan installed Pi packages, find orphaned npm packages, re-register or bulk-uninstall them. " +
 			"Actions: 'scan' (list all packages with status), 'orphans' (show npm packages not in settings), " +
-			"'uninstall' (remove packages — provide names in 'packages' param).",
+			"'reinstall' (re-register orphaned packages back to settings), 'uninstall' (remove packages — provide names in 'packages' param).",
 		promptSnippet: "Scan installed Pi packages",
 		promptGuidelines: [
 			"Use pi_package_cleaner to audit and clean up installed Pi packages.",
 			"Action 'scan' (default) lists all packages from settings.json with their npm install status and version.",
 			"Action 'orphans' shows npm-global packages that look like Pi packages but aren't in settings.json.",
+			"Action 'reinstall' re-registers orphaned packages back into settings.json. Provide package names (npm:-prefixed) in the 'packages' array.",
 			"Action 'uninstall' removes packages from settings.json AND runs npm uninstall -g. Provide package names (npm:-prefixed) in the 'packages' array.",
 			"⚠️ Uninstall is destructive. Always show the user what will be removed and confirm before calling uninstall.",
 			"Git and local packages are marked as 'registered' — they don't have a matching npm global install.",
@@ -296,6 +317,39 @@ export function setupPackageCleanerTool(pi: ExtensionAPI) {
 					};
 				}
 
+				case "reinstall": {
+					const targets = params.packages ?? [];
+					if (targets.length === 0) {
+						return {
+							content: [{ type: "text", text: "No packages specified. Provide orphaned package names in the 'packages' parameter (e.g. [\"npm:pi-cmux\", \"npm:pi-mermaid\"])." }],
+							details: { action: "reinstall", total: 0, installed: 0, registered: 0, orphaned: 0, uninstalled: [], failed: [] },
+						};
+					}
+
+					const result = doReinstall(targets);
+
+					let text = `Reinstall results:\n`;
+					if (result.reinstalled.length > 0) {
+						text += `  Re-registered: ${result.reinstalled.join(", ")}\n`;
+					}
+					if (result.failed.length > 0) {
+						text += `  Failed: ${result.failed.join("; ")}\n`;
+					}
+
+					return {
+						content: [{ type: "text", text }],
+						details: {
+							action: "reinstall",
+							total: targets.length,
+							installed: 0,
+							registered: 0,
+							orphaned: 0,
+							uninstalled: result.reinstalled,
+							failed: result.failed,
+						},
+					};
+				}
+
 				case "uninstall": {
 					const targets = params.packages ?? [];
 					if (targets.length === 0) {
@@ -331,7 +385,7 @@ export function setupPackageCleanerTool(pi: ExtensionAPI) {
 
 				default: {
 					return {
-						content: [{ type: "text", text: `Unknown action. Use 'scan', 'orphans', or 'uninstall'.` }],
+						content: [{ type: "text", text: `Unknown action. Use 'scan', 'orphans', 'reinstall', or 'uninstall'.` }],
 						details: { action: params.action ?? "unknown", total: 0, installed: 0, registered: 0, orphaned: 0 },
 					};
 				}
@@ -462,6 +516,7 @@ export function setupPackageCleanerTool(pi: ExtensionAPI) {
 			const choice = await ctx.ui.select(
 				`${orphaned.length} orphaned package(s) found`,
 				[
+					"Re-register all in settings",
 					"Remove all orphans",
 					"Select individually",
 					"Cancel",
@@ -469,6 +524,21 @@ export function setupPackageCleanerTool(pi: ExtensionAPI) {
 			);
 
 			if (!choice || choice === "Cancel") return;
+
+			if (choice === "Re-register all in settings") {
+				const confirm = await ctx.ui.confirm(
+					`Re-register ${orphaned.length} orphaned package(s) in settings.json?`,
+					orphanLabels.join("\n"),
+				);
+				if (!confirm) return;
+
+				const result = doReinstall(orphaned.map(e => e.name));
+				const msg = [];
+				if (result.reinstalled.length > 0) msg.push(`Re-registered: ${result.reinstalled.join(", ")}`);
+				if (result.failed.length > 0) msg.push(`Failed: ${result.failed.join("; ")}`);
+				ctx.ui.notify(msg.join("\n") || "Done.", result.failed.length > 0 ? "warning" : "info");
+				return;
+			}
 
 			if (choice === "Remove all orphans") {
 				const confirm = await ctx.ui.confirm(
@@ -487,25 +557,34 @@ export function setupPackageCleanerTool(pi: ExtensionAPI) {
 
 			// Select individually — multi-step selection
 			const toRemove: string[] = [];
+			const toReregister: string[] = [];
 			for (const e of orphaned) {
 				const pick = await ctx.ui.select(
 					`${e.npmPackage} @${e.version ?? "?"}`,
-					["Remove", "Keep", "Done selecting"],
+					["Re-register", "Remove", "Keep", "Done selecting"],
 				);
 				if (pick === "Done selecting") break;
 				if (pick === "Remove") toRemove.push(e.name);
+				if (pick === "Re-register") toReregister.push(e.name);
 			}
 
-			if (toRemove.length === 0) {
-				ctx.ui.notify("No packages selected for removal.", "info");
+			if (toRemove.length === 0 && toReregister.length === 0) {
+				ctx.ui.notify("No packages selected.", "info");
 				return;
 			}
 
-			const result = doUninstall(toRemove);
-			const msg = [];
-			if (result.uninstalled.length > 0) msg.push(`Removed: ${result.uninstalled.join(", ")}`);
-			if (result.failed.length > 0) msg.push(`Failed: ${result.failed.join("; ")}`);
-			ctx.ui.notify(msg.join("\n") || "Done.", result.failed.length > 0 ? "warning" : "info");
+			const msgs = [];
+			if (toReregister.length > 0) {
+				const r = doReinstall(toReregister);
+				if (r.reinstalled.length > 0) msgs.push(`Re-registered: ${r.reinstalled.join(", ")}`);
+				if (r.failed.length > 0) msgs.push(`Re-register failed: ${r.failed.join("; ")}`);
+			}
+			if (toRemove.length > 0) {
+				const r = doUninstall(toRemove);
+				if (r.uninstalled.length > 0) msgs.push(`Removed: ${r.uninstalled.join(", ")}`);
+				if (r.failed.length > 0) msgs.push(`Remove failed: ${r.failed.join("; ")}`);
+			}
+			ctx.ui.notify(msgs.join("\n") || "Done.", msgs.some(m => m.includes("failed")) ? "warning" : "info");
 		},
 	});
 }
