@@ -19,6 +19,15 @@
       "license": "MIT",
       "upstreamVersion": "0.3.1",
       "ported": ["pi_updater tool", "/update command"]
+    },
+    {
+      "name": "@alexanderfortin/pi-loaded-tools",
+      "type": "npm",
+      "url": "npm:@alexanderfortin/pi-loaded-tools",
+      "repo": "https://github.com/shaftoe/pi-loaded-tools",
+      "license": "MIT",
+      "upstreamVersion": "0.4.3",
+      "ported": ["loaded_tools tool", "/tools command", "pi-loaded-tools message renderer", "startup display"]
     }
   ]
 }
