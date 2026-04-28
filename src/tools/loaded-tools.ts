@@ -224,11 +224,64 @@ function buildStatsLine(tools: LoadedTool[]): string {
  * When false (expanded), shows the full listing with scope groups,
  * active indicators, and a stats summary line.
  */
+function getExtensionShortName(path: string): string {
+	if (path.startsWith("npm:")) {
+		return path.slice(4);
+	}
+	const cleaned = path.replace(/\/dist\/index\.js$/, "").replace(/\/src\/index\.[tj]s$/, "");
+	const segments = cleaned.split("/");
+	return segments[segments.length - 1] || cleaned;
+}
+
 export function formatToolsList(tools: LoadedTool[], theme: Theme, compact = false): string {
 	if (compact) {
-		const names = tools.map((t) => t.name).sort((a, b) => a.localeCompare(b));
-		const body = names.length > 0 ? theme.fg("dim", `  ${names.join(", ")}`) : theme.fg("dim", "  (none)");
-		return `${theme.fg("mdHeading", "\x1b[1m[Tools]\x1b[22m")}\n${body}`;
+		const lines: string[] = [];
+		lines.push(theme.fg("mdHeading", "\x1b[1m[Tools]\x1b[22m"));
+
+		// Group by source, then by extension path
+		const bySource = new Map<string, Map<string, string[]>>();
+		for (const tool of tools) {
+			const sourceKey = tool.source;
+			if (!bySource.has(sourceKey)) {
+				bySource.set(sourceKey, new Map());
+			}
+			const extMap = bySource.get(sourceKey)!;
+			const extKey = tool.extensionPath ?? "(local)";
+			if (!extMap.has(extKey)) {
+				extMap.set(extKey, []);
+			}
+			extMap.get(extKey)!.push(tool.name);
+		}
+
+		// Built-in
+		const builtinExts = bySource.get("builtin");
+		if (builtinExts) {
+			const names = [...builtinExts.values()].flat().sort((a, b) => a.localeCompare(b));
+			lines.push(`  ${theme.fg("accent", "built-in")}`);
+			lines.push(theme.fg("dim", `    ${names.join(", ")}`));
+		}
+
+		// SDK
+		const sdkExts = bySource.get("sdk");
+		if (sdkExts) {
+			const names = [...sdkExts.values()].flat().sort((a, b) => a.localeCompare(b));
+			lines.push(`  ${theme.fg("accent", "sdk")}`);
+			lines.push(theme.fg("dim", `    ${names.join(", ")}`));
+		}
+
+		// Extensions
+		const extExts = bySource.get("extension");
+		if (extExts) {
+			lines.push(`  ${theme.fg("accent", "Extensions")}`);
+			const sortedExts = Array.from(extExts.entries()).sort(([a], [b]) => a.localeCompare(b));
+			for (const [extPath, names] of sortedExts) {
+				const displayName = getExtensionShortName(extPath);
+				lines.push(`    ${theme.fg("mdLink", displayName)}`);
+				lines.push(theme.fg("dim", `      ${names.sort((a, b) => a.localeCompare(b)).join(", ")}`));
+			}
+		}
+
+		return lines.join("\n");
 	}
 
 	const stats = buildStatsLine(tools);
