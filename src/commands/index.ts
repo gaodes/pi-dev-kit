@@ -1,5 +1,6 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import { registerLoadedToolsCommand } from "../tools/loaded-tools";
 
-export function registerCommands(_pi: ExtensionAPI) {
-	// No commands yet. Tools only.
+export function registerCommands(pi: ExtensionAPI) {
+	registerLoadedToolsCommand(pi);
 }
