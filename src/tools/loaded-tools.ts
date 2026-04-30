@@ -228,7 +228,10 @@ function getExtensionShortName(path: string): string {
 	if (path.startsWith("npm:")) {
 		return path.slice(4);
 	}
-	const cleaned = path.replace(/\/dist\/index\.js$/, "").replace(/\/src\/index\.[tj]s$/, "");
+	const cleaned = path
+		.replace(/\/dist\/index\.js$/, "")
+		.replace(/\/src\/index\.[tj]s$/, "")
+		.replace(/\/index\.[tj]s$/, "");
 	const segments = cleaned.split("/");
 	return segments[segments.length - 1] || cleaned;
 }
