@@ -1,13 +1,13 @@
 {
-	"name": "pi-tools",
-	"version": "0.1.1",
-	"description": "Runtime tools for Pi — version, docs, changelog, updater, package manager, extension benchmarking, and loaded tools listing",
+	"name": "pi-dev-kit",
+	"version": "0.2.0",
+	"description": "Developer toolkit for Pi — version, docs, changelog, extension benchmarking, and loaded tools listing",
 	"keywords": [
 		"pi-package",
 		"pi-extension",
 		"pi",
-		"tools",
-		"dev-kit"
+		"dev-kit",
+		"tools"
 	],
 	"type": "module",
 	"main": "./src/index.ts",
@@ -37,7 +37,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "ssh://git@gitlab-ssh.elches.dev:2222/agents/primecodex/extensions/pi-tools.git"
+		"url": "ssh://git@gitlab-ssh.elches.dev:2222/agents/primecodex/extensions/pi-dev-kit.git"
 	},
 	"license": "MIT"
 }
