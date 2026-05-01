@@ -1,7 +1,7 @@
 {
 	"name": "pi-dev-kit",
 	"version": "0.3.0",
-	"description": "Developer toolkit for Pi — version, docs, changelog, extension benchmarking, and loaded tools listing",
+	"description": "Developer toolkit for Pi \u2014 version, docs, changelog, extension benchmarking, and loaded tools listing",
 	"keywords": [
 		"pi-package",
 		"pi-extension",
@@ -27,7 +27,7 @@
 		]
 	},
 	"dependencies": {
-		"@aliou/pi-utils-ui": "file:../pi-utils-ui",
+		"@aliou/pi-utils-ui": "*",
 		"typebox": "^1.1.24"
 	},
 	"peerDependencies": {
