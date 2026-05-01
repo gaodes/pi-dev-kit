@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-04-25",
+  "updatedAt": "2026-05-01",
   "primary": {
     "name": "@aliou/pi-dev-kit",
     "type": "npm",
@@ -8,7 +8,7 @@
     "repo": "https://github.com/aliou/pi-dev-kit",
     "license": "MIT",
     "relationship": "fork",
-    "upstreamVersion": "0.6.4"
+    "upstreamVersion": "0.6.5"
   },
   "inspirations": [
     {
