@@ -27,7 +27,7 @@
 		]
 	},
 	"dependencies": {
-		"@aliou/pi-utils-ui": "^0.2.1",
+		"@aliou/pi-utils-ui": "file:../pi-utils-ui",
 		"typebox": "^1.1.24"
 	},
 	"peerDependencies": {
