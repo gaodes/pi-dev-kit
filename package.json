@@ -1,6 +1,6 @@
 {
 	"name": "pi-dev-kit",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"description": "Developer toolkit for Pi — version, docs, changelog, extension benchmarking, and loaded tools listing",
 	"keywords": [
 		"pi-package",
@@ -18,9 +18,16 @@
 	"pi": {
 		"extensions": [
 			"./src/index.ts"
+		],
+		"skills": [
+			"./src/skills"
+		],
+		"prompts": [
+			"./src/prompts"
 		]
 	},
 	"dependencies": {
+		"@aliou/pi-utils-ui": "^0.2.1",
 		"typebox": "^1.1.24"
 	},
 	"peerDependencies": {
