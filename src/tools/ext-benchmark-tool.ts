@@ -69,8 +69,12 @@ const ExtBenchmarkParams = Type.Object({
 			[
 				Type.Literal("all", { description: "All locations (default)" }),
 				Type.Literal("global", { description: "Global extensions only" }),
-				Type.Literal("project", { description: "Project-local extensions only" }),
-				Type.Literal("packages", { description: "Installed npm/git packages only" }),
+				Type.Literal("project", {
+					description: "Project-local extensions only",
+				}),
+				Type.Literal("packages", {
+					description: "Installed npm/git packages only",
+				}),
 			],
 			{
 				description: "Filter by extension location. Default: all",
@@ -440,95 +444,6 @@ function buildJitiAliases(): Record<string, string> {
 	return aliases;
 }
 
-async function benchmarkExtension(
-	extPath: string,
-	jitiImporter: (path: string) => Promise<unknown>,
-): Promise<{ importMs: number; factoryMs: number; error?: string }> {
-	const importStart = performance.now();
-	let factory: unknown;
-	try {
-		factory = await jitiImporter(extPath);
-	} catch (err) {
-		const importEnd = performance.now();
-		return {
-			importMs: Math.round((importEnd - importStart) * 100) / 100,
-			factoryMs: 0,
-			error: `Import failed: ${err instanceof Error ? err.message : String(err)}`,
-		};
-	}
-	const importEnd = performance.now();
-	const importMs = Math.round((importEnd - importStart) * 100) / 100;
-
-	if (typeof factory !== "function") {
-		return { importMs, factoryMs: 0 };
-	}
-
-	const factoryStart = performance.now();
-	try {
-		factory(createStubAPI());
-	} catch (err) {
-		const factoryEnd = performance.now();
-		return {
-			importMs,
-			factoryMs: Math.round((factoryEnd - factoryStart) * 100) / 100,
-			error: `Factory failed: ${err instanceof Error ? err.message : String(err)}`,
-		};
-	}
-	const factoryEnd = performance.now();
-	const factoryMs = Math.round((factoryEnd - factoryStart) * 100) / 100;
-
-	return { importMs, factoryMs };
-}
-
-/**
- * Stub ExtensionAPI that mimics the full API surface.
- * Captures registrations without triggering real side effects.
- * Covers all methods extensions commonly call during factory execution.
- */
-function createStubAPI(): Record<string, unknown> {
-	const noop = () => {};
-	const noopAsync = async () => {};
-	const noopReturn = () => undefined;
-	const noopReturnArr = () => [];
-	const noopReturnStr = () => "";
-
-	return {
-		// Registration methods
-		registerTool: noop,
-		registerCommand: noop,
-		registerShortcut: noop,
-		registerFlag: noop,
-		registerProvider: noop,
-		registerMessageRenderer: noop,
-
-		// Events
-		on: noop,
-
-		// State and communication
-		appendEntry: noop,
-		sendMessage: noopAsync,
-		sendUserMessage: noopAsync,
-		exec: noopAsync,
-		events: { on: noop, emit: noopAsync, off: noop },
-
-		// Runtime getters that some extensions call during setup
-		getFlag: noopReturn,
-		getFlags: noopReturnArr,
-		getLabel: noopReturnStr,
-		setLabel: noop,
-		getActiveTools: noopReturnArr,
-		getAllTools: noopReturnArr,
-		setActiveTools: noop,
-		refreshTools: noopAsync,
-		getCommands: noopReturnArr,
-
-		// Model/thinking
-		setModel: noop,
-		getThinkingLevel: noopReturn,
-		setThinkingLevel: noop,
-	};
-}
-
 // ---------------------------------------------------------------------------
 // Output formatting
 // ---------------------------------------------------------------------------
@@ -629,59 +544,84 @@ export function setupExtBenchmarkTool(pi: ExtensionAPI) {
 			if (action === "list") {
 				const text = formatList(entries);
 				return {
-					content: [{ type: "text", text: `Discovered ${entries.length} extension(s):\n\n${text}` }],
-					details: { results: [], totalExtensions: entries.length, totalTimeMs: 0, slowest: "" },
+					content: [
+						{
+							type: "text",
+							text: `Discovered ${entries.length} extension(s):\n\n${text}`,
+						},
+					],
+					details: {
+						results: [],
+						totalExtensions: entries.length,
+						totalTimeMs: 0,
+						slowest: "",
+					},
 				};
 			}
 
-			// Profile mode
+			// Profile mode — run in a worker thread for isolation
 			if (entries.length === 0) {
 				return {
-					content: [{ type: "text", text: "No extensions discovered for the selected scope." }],
-					details: { results: [], totalExtensions: 0, totalTimeMs: 0, slowest: "" },
+					content: [
+						{
+							type: "text",
+							text: "No extensions discovered for the selected scope.",
+						},
+					],
+					details: {
+						results: [],
+						totalExtensions: 0,
+						totalTimeMs: 0,
+						slowest: "",
+					},
 				};
 			}
 
-			// Build jiti importer with proper alias resolution
 			const aliases = buildJitiAliases();
-			let jiti: { import: (path: string, opts?: { default?: true }) => Promise<unknown> } | null = null;
+			const workerPath = new URL("./ext-benchmark-worker.ts", import.meta.url);
 
-			try {
-				const { createJiti } = await import("@mariozechner/jiti");
-				jiti = createJiti(import.meta.url, {
-					moduleCache: false,
-					alias: aliases,
-				});
-			} catch {
-				// jiti unavailable — fall back to native import (won't work for TS)
-			}
-
-			const importer = jiti
-				? (p: string) => jiti!.import(p, { default: true })
-				: async (p: string) => {
-						const mod = await import(`${p}?t=${Date.now()}`);
-						return mod.default ?? mod;
-					};
-
+			const { Worker } = await import("node:worker_threads");
 			const overallStart = performance.now();
-			const results: BenchmarkResult[] = [];
 
-			for (const entry of entries) {
-				const { importMs, factoryMs, error } = await benchmarkExtension(entry.path, importer);
-				results.push({
-					name: entry.name,
-					path: entry.path,
-					location: entry.location,
-					importMs,
-					factoryMs,
-					totalMs: importMs + factoryMs,
-					success: !error,
-					error,
+			const results: BenchmarkResult[] = await new Promise((resolve, reject) => {
+				const worker = new Worker(workerPath, {
+					workerData: {
+						extensions: entries.map((e) => ({
+							name: e.name,
+							path: e.path,
+							location: e.location,
+						})),
+						aliases,
+					},
 				});
-			}
+
+				worker.on("message", (msg: unknown) => {
+					if (msg && typeof msg === "object" && "error" in msg) {
+						reject(new Error((msg as { error: string }).error));
+						return;
+					}
+					resolve(msg as BenchmarkResult[]);
+				});
+
+				worker.on("error", reject);
+
+				// Timeout after 60s to prevent hanging
+				const timeout = setTimeout(() => {
+					worker.terminate();
+					reject(new Error("Benchmark timed out after 60s"));
+				}, 60_000);
+
+				worker.on("exit", () => clearTimeout(timeout));
+			});
 
 			const overallEnd = performance.now();
 			const totalTimeMs = Math.round((overallEnd - overallStart) * 100) / 100;
+
+			// Merge paths back in (worker doesn't return them)
+			const pathMap = new Map(entries.map((e) => [e.name + e.location, e.path]));
+			for (const r of results) {
+				r.path = pathMap.get(r.name + r.location) ?? "";
+			}
 
 			const sorted = [...results].sort((a, b) => b.totalMs - a.totalMs);
 			const text = formatResults(results);
