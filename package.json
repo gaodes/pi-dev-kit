@@ -1,49 +1,49 @@
 {
-	"name": "pi-dev-kit",
-	"version": "1.0.0",
-	"description": "Developer toolkit for Pi — modular skills for authoring extensions, skills, prompt templates, themes, packages, and context files. Includes introspection tools for version, docs, changelog, benchmarking, and loaded tools.",
-	"keywords": [
-		"pi-package",
-		"pi",
-		"dev-kit",
-		"tools"
-	],
-	"type": "module",
-	"main": "./src/index.ts",
-	"files": [
-		"src/",
-		"README.md"
-	],
-	"pi": {
-		"extensions": [
-			"./src/index.ts"
-		],
-		"skills": [
-			"./src/skills"
-		],
-		"prompts": [
-			"./src/prompts"
-		]
-	},
-	"dependencies": {
-		"@gaodes/pi-utils-ui": "^0.3.0",
-		"typebox": "^1.1.24"
-	},
-	"peerDependencies": {
-		"@mariozechner/pi-coding-agent": "*",
-		"@mariozechner/pi-tui": "*"
-	},
-	"peerDependenciesMeta": {
-		"@mariozechner/pi-coding-agent": {
-			"optional": true
-		},
-		"@mariozechner/pi-tui": {
-			"optional": true
-		}
-	},
-	"repository": {
-		"type": "git",
-		"url": "ssh://git@gitlab-ssh.elches.dev:2222/agents/primecodex/extensions/pi-dev-kit.git"
-	},
-	"license": "MIT"
+  "name": "pi-dev-kit",
+  "version": "2.0.0",
+  "description": "Developer toolkit for Pi \u2014 modular skills for authoring extensions, skills, prompt templates, themes, packages, and context files. Includes introspection tools for version, docs, changelog, benchmarking, and loaded tools.",
+  "keywords": [
+    "pi-package",
+    "pi",
+    "dev-kit",
+    "tools"
+  ],
+  "type": "module",
+  "main": "./src/index.ts",
+  "files": [
+    "src/",
+    "README.md"
+  ],
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ],
+    "skills": [
+      "./src/skills"
+    ],
+    "prompts": [
+      "./src/prompts"
+    ]
+  },
+  "dependencies": {
+    "@gaodes/pi-utils-ui": "^0.3.0",
+    "typebox": "^1.1.24"
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-coding-agent": "*",
+    "@mariozechner/pi-tui": "*"
+  },
+  "peerDependenciesMeta": {
+    "@mariozechner/pi-coding-agent": {
+      "optional": true
+    },
+    "@mariozechner/pi-tui": {
+      "optional": true
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@gitlab-ssh.elches.dev:2222/agents/primecodex/extensions/pi-dev-kit.git"
+  },
+  "license": "MIT"
 }
