@@ -190,7 +190,7 @@ You can modify any of these fields. The hook runs after pi's own processing but 
 - **Replaces the built-in bash tool.** When you call `pi.registerTool()` with a tool named `"bash"`, it replaces the default. Only one extension should do this.
 - **Transparent to the agent.** The agent sees the original command in the tool call UI but gets the output of the rewritten command.
 - **Execution order with tool_call hooks.** `tool_call` event hooks (blockers) run first. If a blocker returns `{ block: true }`, the spawn hook never fires. This means you can combine blocking hooks for commands that should be stopped entirely with spawn hooks for commands that should be rewritten.
-- **Prefer AST-based rewrites over regex.** A false positive rewrite corrupts a command silently. Use `@aliou/sh` or similar shell parsers to identify command names in the AST, then do surgical string replacement at the identified positions. If the parse fails, return the command unchanged.
+- **Prefer AST-based rewrites over regex.** A false positive rewrite corrupts a command silently. Use `a shell parser` or similar shell parsers to identify command names in the AST, then do surgical string replacement at the identified positions. If the parse fails, return the command unchanged.
 - **Compose multiple rewriters.** Chain rewriter functions that each transform the context:
 
 ```typescript

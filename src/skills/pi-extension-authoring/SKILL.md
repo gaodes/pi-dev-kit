@@ -1,9 +1,9 @@
 ---
-name: pi-extension
-description: Create, update, and publish Pi extensions. Use when working on extensions in this repository.
+name: pi-extension-authoring
+description: Author, review, and debug Pi extensions. Use when creating a new extension, modifying an existing one, or evaluating extension architecture. Covers tools, commands, hooks, providers, TUI components, rendering, state, testing, and publishing.
 ---
 
-# Pi Extension Development
+# Pi Extension Authoring
 
 Guide for creating and maintaining Pi extensions. Read the relevant reference files before implementing.
 
@@ -16,11 +16,15 @@ Pi injects these packages via jiti at runtime. Extensions do not need to install
 - `@mariozechner/pi-ai` — AI utilities (`StringEnum`, etc.)
 - `typebox` — TypeBox 1.x schema definitions for tool parameters and related types. Do not use `@sinclair/typebox` in new code.
 
-```typescript
-// Tool UI components (from @aliou/pi-utils-ui)
-import { ToolCallHeader, ToolBody, ToolFooter } from "@aliou/pi-utils-ui";
+### Companion Packages
 
-// Core types
+These packages provide higher-level abstractions and are available as npm packages:
+
+- `@gaodes/pi-utils-ui` — shared TUI components built on `@mariozechner/pi-tui`: `ToolCallHeader`, `ToolBody`, `ToolFooter`, `DataTable`, `DescriptionList`, `Tree`, `Alert`, `Badge`, `EmptyState`, `ProgressBar`, `Steps`, `Breadcrumbs`, `StatusLine`, `Tabs`, `Columns`, `Stack`, `Panel`, `Section`, `Field`. Install as a dependency: `npm install @gaodes/pi-utils-ui`.
+- `@gaodes/pi-test-harness` — test framework for Pi extensions: `createTestSession`, playbook DSL (`when`, `calls`, `says`), mock tools/UI, event assertions, sandbox install verification. Install as a dev dependency: `npm install --save-dev @gaodes/pi-test-harness`.
+
+```typescript
+// Core imports (always available)
 import type {
   AgentToolResult,
   AgentToolUpdateCallback,
@@ -29,12 +33,16 @@ import type {
   Theme,
   ToolRenderResultOptions,
 } from "@mariozechner/pi-coding-agent";
-
-// Rendering utilities
-import { getMarkdownTheme, keyHint, truncateHead, formatSize } from "@mariozechner/pi-coding-agent";
-
-// TUI components
+import {
+  getMarkdownTheme,
+  keyHint,
+  truncateHead,
+  formatSize,
+} from "@mariozechner/pi-coding-agent";
 import { Container, Markdown, Text } from "@mariozechner/pi-tui";
+
+// Companion package imports (install as dependency)
+import { ToolCallHeader, ToolBody, ToolFooter } from "@gaodes/pi-utils-ui";
 ```
 
 ## Workflow
@@ -52,7 +60,7 @@ import { Container, Markdown, Text } from "@mariozechner/pi-tui";
 5. If the extension displays rich UI: Read `references/components.md` for TUI components and `references/messages.md` for message display patterns.
 6. If the extension tracks state: Read `references/state.md`.
 7. For less common APIs: Read `references/additional-apis.md`.
-8. If the extension has user-configurable settings: Use `registerSettingsCommand` from `@aliou/pi-utils-settings`. Read `references/structure.md` for settings command and auth wizard patterns.
+8. If the extension has user-configurable settings: Implement a settings command using `ctx.ui.custom()` with `SettingsList` from `@mariozechner/pi-tui`. Read `references/structure.md` for patterns.
 9. If the extension adds a tool that competes with a natural bash fallback: use `promptSnippet` and `promptGuidelines` on the tool definition for simple guidance. Write `promptGuidelines` as standalone bullets that name the exact tool, because pi injects them verbatim into the shared global `Guidelines` section. Use system prompt hooks only for complex cross-tool orchestration. Read the **Guidance** section in `references/additional-apis.md`.
 10. Before publishing: Read `references/publish.md` and `references/documentation.md`.
 
@@ -65,56 +73,63 @@ import { Container, Markdown, Text } from "@mariozechner/pi-tui";
 
 ## Reference Files
 
-| File | Content |
-|---|---|
-| `references/structure.md` | Project layout, package.json, tsconfig, biome.json, config.ts, entry point patterns (including acceptable exceptions), API key pattern, imports |
-| `references/tools.md` | Tool registration, execute signature, parameters, `prepareArguments`, path normalization, file mutation queueing, streaming, rendering, naming, renderCall/renderResult UI guidelines |
-| `references/hooks.md` | Events, blocking/cancelling, input transformation, system prompt modification, bash spawn hooks (command rewriting) |
-| `references/commands.md` | Command registration, three-tier pattern, component extraction |
-| `references/components.md` | TUI components (pi-tui + pi-coding-agent), custom(), theme styling, keyboard handling |
-| `references/providers.md` | Current `pi.registerProvider(name, config)` API, model definition, provider override/registration patterns, API key gating |
-| `references/modes.md` | Mode behavior matrix, ctx.hasUI, dialog vs fire-and-forget, three-tier pattern |
-| `references/messages.md` | sendMessage, registerMessageRenderer, notify, when to use each |
-| `references/state.md` | appendEntry, state reconstruction, appendEntry vs sendMessage |
-| `references/additional-apis.md` | Shortcuts, flags, exec, sendUserMessage, session name, labels, model control, EventBus, theme, UI customization, system prompt guidance injection |
-| `references/publish.md` | npm publishing, changesets (manual file format + CI automation), GitHub Actions publish workflow, first-time setup, NPM_TOKEN, pre-publish checklist |
-| `references/testing.md` | Local development, type checking, manual testing, debugging |
-| `references/documentation.md` | README template, what to document, changelog |
+| File                            | Content                                                                                                                                                                               |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `references/structure.md`       | Project layout, package.json, tsconfig, biome.json, config.ts, entry point patterns (including acceptable exceptions), API key pattern, imports                                       |
+| `references/tools.md`           | Tool registration, execute signature, parameters, `prepareArguments`, path normalization, file mutation queueing, streaming, rendering, naming, renderCall/renderResult UI guidelines |
+| `references/hooks.md`           | Events, blocking/cancelling, input transformation, system prompt modification, bash spawn hooks (command rewriting)                                                                   |
+| `references/commands.md`        | Command registration, three-tier pattern, component extraction                                                                                                                        |
+| `references/components.md`      | TUI components (pi-tui + pi-coding-agent), custom(), theme styling, keyboard handling                                                                                                 |
+| `references/providers.md`       | Current `pi.registerProvider(name, config)` API, model definition, provider override/registration patterns, API key gating                                                            |
+| `references/modes.md`           | Mode behavior matrix, ctx.hasUI, dialog vs fire-and-forget, three-tier pattern                                                                                                        |
+| `references/messages.md`        | sendMessage, registerMessageRenderer, notify, when to use each                                                                                                                        |
+| `references/state.md`           | appendEntry, state reconstruction, appendEntry vs sendMessage                                                                                                                         |
+| `references/additional-apis.md` | Shortcuts, flags, exec, sendUserMessage, session name, labels, model control, EventBus, theme, UI customization, system prompt guidance injection                                     |
+| `references/publish.md`         | npm publishing, changesets, pre-publish checklist                                                                                                                                     |
+| `references/testing.md`         | Local development, type checking, manual testing, debugging                                                                                                                           |
+| `references/documentation.md`   | README template, what to document, changelog                                                                                                                                          |
 
 ## Reference Extensions
 
-When implementing, look at these existing extensions for patterns:
+Pi ships with 70+ example extensions covering every pattern. Find them in `examples/extensions/` relative to the Pi installation. See the `pi-patterns` skill for a categorized index.
 
-**Standalone repos (recommended structure):**
-- `pi-linkup` (`/Users/alioudiallo/code/src/pi.dev/pi-linkup/`): Tools wrapping a third-party API. Has tools with `promptSnippet`/`promptGuidelines`, custom rendering with `ToolCallHeader`/`ToolBody`/`ToolFooter`, output truncation with temp files, API key gating. Moved from system-prompt hooks to per-tool metadata.
-- `pi-synthetic` (`/Users/alioudiallo/code/src/pi.dev/pi-synthetic/`): Provider + tools. Has a provider with models, a command with `custom()` component, API key gating.
-- `pi-processes` (`/Users/alioudiallo/code/src/pi.dev/pi-processes/`): Multi-action tool with `promptSnippet`/`promptGuidelines` plus system prompt guidance hook for complex multi-tool orchestration, core `ProcessManager` class with unit tests, `ToolBody` with `showCollapsed` fields, conditional footers.
-- `pi-linear` (`/Users/alioudiallo/code/src/pi.dev/pi-linear/`): Multi-action tool with action modules, auth wizard using `Wizard` from `@aliou/pi-utils-settings`, settings command with `registerSettingsCommand`, config migrations, `ToolBody`/`ToolFooter` rendering, system prompt guidance for cross-tool orchestration.
-- `pi-obsidian` (`/Users/alioudiallo/code/src/pi.dev/pi-obsidian/`): Tools wrapping a CLI. Has a separate `obsidian-vault-core` package for domain logic. Uses `pi.exec()` for shell commands, `ToolCallHeader`/`ToolFooter` rendering, throws errors.
+Key archetypes to study:
+
+- **Minimal tool**: `hello.ts`
+- **Tool with user interaction**: `question.ts`, `questionnaire.ts`
+- **Stateful tool with rendering**: `todo.ts`
+- **Tool with custom rendering**: `built-in-tool-renderer.ts`, `minimal-mode.ts`
+- **Permission gate**: `permission-gate.ts`, `protected-paths.ts`
+- **Custom command**: `commands.ts`, `preset.ts`
+- **Custom UI / overlay**: `qna.ts`, `overlay-test.ts`, `snake.ts`
+- **Subagent**: `subagent/`
+- **Plan mode**: `plan-mode/`
+- **Provider**: `custom-provider-anthropic/`, `custom-provider-gitlab-duo/`
+- **SSH / sandbox**: `ssh.ts`, `sandbox/`
 
 ## Critical Rules
 
 1. **Execute parameter order**: `(toolCallId, params, signal, onUpdate, ctx)`. Signal before onUpdate.
 2. **Always use `onUpdate?.()`**: Optional chaining. The parameter can be `undefined`.
 3. **No `.js` in imports**: Use bare module paths (`./tools/my-tool`, not `./tools/my-tool.js`).
-4. **Mode awareness**: Every `ctx.ui.custom()` call needs an RPC fallback (use `select`/`confirm`/`notify` -- they work in RPC). Do not use `done(undefined)` for normal interactive close paths when you detect fallback with `result === undefined`; use explicit sentinels (`null`, `"closed"`, boolean). Every `tool_call` hook with dialogs needs a `ctx.hasUI` check.
+4. **Mode awareness**: Every `ctx.ui.custom()` call needs an RPC fallback (use `select`/`confirm`/`notify` — they work in RPC). Do not use `done(undefined)` for normal interactive close paths when you detect fallback with `result === undefined`; use explicit sentinels (`null`, `"closed"`, boolean). Every `tool_call` hook with dialogs needs a `ctx.hasUI` check.
 5. **API key gating**: Check before registering tools that require the key. Providers handle missing keys internally via their `models()` function.
 6. **Tool naming**: Prefix with API name for third-party integrations (`linkup_web_search`). No prefix for internal tools (`get_current_time`).
 7. **Tool rendering uses `ToolCallHeader`**: First line `[Tool Name]: [Action] [Main arg] [Option args]`, long args on follow-up lines. Use display names, not raw tool IDs.
-8. **Deterministic call rendering**: Build `renderCall` with a stable extraction order (action → main arg → option args → long args), process-style. Same input should produce same header layout.
+8. **Deterministic call rendering**: Build `renderCall` with a stable extraction order (action → main arg → option args → long args). Same input should produce same header layout.
 9. **Long args placement**: Put long prompt/task/question/context strings on following lines. Keep first line scannable.
-10. **Result layout**: In `renderResult(result, options, theme)`, handle `isPartial` first with a stable tool-scoped message. Detect errors by checking for missing expected fields in `details` (framework sets `details: {}` on throw). Use `ToolBody` from `@aliou/pi-utils-ui` with `showCollapsed` fields. Use `ToolFooter` conditionally (omit when empty). Use `Container`/`Markdown` for rich content.
+10. **Result layout**: In `renderResult(result, options, theme)`, handle `isPartial` first with a stable tool-scoped message. Detect errors by checking for missing expected fields in `details` (framework sets `details: {}` on throw). Use `ToolBody` from `@gaodes/pi-utils-ui` with `showCollapsed` fields. Use `ToolFooter` conditionally (omit when empty). Use `Container`/`Markdown` for rich content.
 11. **Tool definitions use `defineTool()`**: Define standalone tools with `defineTool({...})` from `@mariozechner/pi-coding-agent` so `execute`, `renderCall`, and `renderResult` infer typed params from the `parameters` field without casts or explicit generic arguments. Also define `type MyToolParams = Static<typeof parameters>` at the top of each tool file and use it everywhere.
 12. **Tool metadata**: Every tool must have `label` (required). Add `promptSnippet` for system prompt tool listing. Add `promptGuidelines` for usage instructions, but write them as standalone global bullets that name the exact tool. These replace system-prompt hooks for simple tools.
 13. **Output truncation**: For tools returning large text, use `truncateHead()` from `@mariozechner/pi-coding-agent`. Write full content to temp file. Append footer with line/byte counts and temp file path.
 14. **Core/lib pattern**: Extract domain logic into modules (`client.ts`, `manager.ts`) that don't import from Pi. Tools are thin wrappers. Core modules are unit-testable with vitest.
 15. **Humanize messages**: Show display names first, IDs in dim/parens. `"Started \"backend\" (proc_42)"` not `"Started proc_42"`.
-16. **peerDependencies**: Pi injects `@mariozechner/pi-coding-agent`, `@mariozechner/pi-tui`, `@mariozechner/pi-ai`, and `typebox` via jiti at runtime. Any of these that your extension imports must be listed in `peerDependencies` with `optional: true` in `peerDependenciesMeta`. Without `optional: true`, npm 7+ auto-installs peers, adding hundreds of packages on every install even though Pi already provides them. Keep them in `devDependencies` too for local type checking — `pnpm install` installs peers, so development is unaffected. Use `>=CURRENT_VERSION` range, not `*`. Pi 0.69+ uses `typebox` 1.x; do not import from `@sinclair/typebox`.
+16. **peerDependencies**: Pi injects `@mariozechner/pi-coding-agent`, `@mariozechner/pi-tui`, `@mariozechner/pi-ai`, and `typebox` via jiti at runtime. Any of these that your extension imports must be listed in `peerDependencies` with `optional: true` in `peerDependenciesMeta`. Without `optional: true`, npm 7+ auto-installs peers, adding hundreds of packages on every install even though Pi already provides them. Keep them in `devDependencies` too for local type checking. Use `>=CURRENT_VERSION` range, not `*`. Pi 0.69+ uses `typebox` 1.x; do not import from `@sinclair/typebox`.
 17. **Check existing components**: Before creating a new TUI component, check if `pi-tui` or `pi-coding-agent` already exports one that fits.
 18. **Forward abort signals**: Always pass `signal` through to `fetch()`, `pi.exec()`, and API client methods. A tool that ignores its signal prevents cancellation from reaching the underlying operation. Never prefix with `_signal` unless the tool truly has no async work to cancel.
 19. **Never use Node child_process APIs**: Do not use `child_process.exec`, `execSync`, `spawn`, `spawnSync`, `execFile`, or `execFileSync` to run binaries or shell scripts. Always use `pi.exec()`. `pi.exec` handles CWD, signal propagation, and output capture consistently. The only exception is if you need a long-lived streaming process with stdin/stdout piping that `pi.exec` cannot support — document the reason in code comments.
 20. **Never use `homedir()` for pi paths**: Use the SDK helpers from `@mariozechner/pi-coding-agent` instead. They respect the `PI_CODING_AGENT_DIR` env var which is used for testing and custom setups. Key functions: `getAgentDir()`, `getSettingsPath()`, `getSessionsDir()`, `getPromptsDir()`, `getToolsDir()`, `getCustomThemesDir()`, `getModelsPath()`, `getAuthPath()`, `getBinDir()`, `getDebugLogPath()`. All exported from the main package entry point.
-21. **Config uses the interface pattern**: `config.ts` defines two TypeScript interfaces (`RawConfig` with all fields optional, `ResolvedConfig` with all fields required) and a `ConfigLoader<Raw, Resolved>` instance. Do not use TypeBox schemas for config types. For config migrations, use `ConfigLoader` `migrations` option. For settings UI, use `registerSettingsCommand` from `@aliou/pi-utils-settings`.
+21. **Config uses the interface pattern**: `config.ts` defines two TypeScript interfaces (`RawConfig` with all fields optional, `ResolvedConfig` with all fields required) and a `ConfigLoader<Raw, Resolved>` instance. Do not use TypeBox schemas for config types. For config migrations, use `ConfigLoader` `migrations` option.
 22. **Entry point deviations must be documented**: The standard entry point pattern for each feature entry is load config → check `enabled` → register with `pi`. Deviations (no config, API-key-first ordering, no `enabled` toggle) are acceptable when justified, but must be noted in `AGENTS.md`.
 23. **Session replacement uses `withSession`**: After `ctx.newSession()`, `ctx.fork()`, or `ctx.switchSession()`, captured old `pi`, command `ctx`, and `ctx.sessionManager` are stale and may throw. Put post-switch work in `withSession` and use only that fresh callback context.
 
@@ -151,13 +166,11 @@ Before considering an extension complete:
 - [ ] Missing API keys produce a notification, not a crash.
 - [ ] If in a monorepo: package doesn't depend on private workspace packages (run `pnpm run check:public-deps` if available).
 - [ ] `pnpm typecheck` passes.
-- [ ] No `child_process` imports -- uses `pi.exec()` for shell commands.
-- [ ] No `homedir()` calls for pi paths -- uses SDK helpers (`getAgentDir()`, etc.).
+- [ ] No `child_process` imports — uses `pi.exec()` for shell commands.
+- [ ] No `homedir()` calls for pi paths — uses SDK helpers (`getAgentDir()`, etc.).
 - [ ] README documents tools, commands, env vars.
 - [ ] `@mariozechner/pi-tui` (and any other Pi-provided package) is in `peerDependencies` with `optional: true` if imported at runtime, not just `devDependencies`.
-- [ ] `prepare` script is `"[ -d .git ] && husky || true"`, not bare `"husky"`.
 - [ ] `config.ts` uses `ConfigLoader<Raw, Resolved>` with TypeScript interfaces, not TypeBox schemas.
 - [ ] If deviating from the standard feature entry pattern (load-config → check-enabled → register), the reason is documented in `AGENTS.md`.
-- [ ] Settings use `registerSettingsCommand` from `@aliou/pi-utils-settings` when the extension has user-configurable settings.
 - [ ] New code imports TypeBox from `typebox`, not `@sinclair/typebox`.
 - [ ] Any session replacement code uses `withSession` for post-switch work and does not reuse stale session-bound objects.

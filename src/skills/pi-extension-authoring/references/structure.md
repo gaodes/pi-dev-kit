@@ -96,7 +96,7 @@ Not every extension needs every directory. A simple extension with one tool migh
     "typebox": { "optional": true }
   },
   "devDependencies": {
-    "@aliou/biome-plugins": "^0.3.0",
+    "@biomejs/biome": "^0.3.0",
     "@biomejs/biome": "^2.0.0",
     "@changesets/cli": "^2.27.0",
     "@mariozechner/pi-ai": "CURRENT_VERSION",
@@ -194,9 +194,9 @@ All extensions use Biome for linting and formatting. Canonical config:
 {
   "$schema": "https://biomejs.dev/schemas/2.4.2/schema.json",
   "plugins": [
-    "./node_modules/@aliou/biome-plugins/plugins/no-inline-imports.grit",
-    "./node_modules/@aliou/biome-plugins/plugins/no-js-import-extension.grit",
-    "./node_modules/@aliou/biome-plugins/plugins/no-emojis.grit"
+    "./node_modules/@biomejs/biome/plugins/no-inline-imports.grit",
+    "./node_modules/@biomejs/biome/plugins/no-js-import-extension.grit",
+    "./node_modules/@biomejs/biome/plugins/no-emojis.grit"
   ],
   "vcs": {
     "enabled": true,
@@ -228,7 +228,7 @@ All extensions use Biome for linting and formatting. Canonical config:
 }
 ```
 
-The `plugins` field requires Biome 2.x for GritQL plugin support. The `@aliou/biome-plugins` package has five plugins; three apply to pi extensions:
+The `plugins` field requires Biome 2.x for GritQL plugin support. The `@biomejs/biome` package has five plugins; three apply to pi extensions:
 
 - `no-inline-imports`: Disallows `await import()` and `require()` inside functions. All imports must be static.
 - `no-js-import-extension`: Disallows `.js` extensions in import paths (enforces the rule in Critical Rules).
@@ -241,7 +241,7 @@ The other two (`no-interpolated-classname`, `phosphor-icon-suffix`) are specific
 Non-trivial extensions have a `config.ts` that defines the config schema, types, and loader instance. Use plain TypeScript interfaces with a raw/resolved two-type pattern. The raw type has all fields optional — only overrides are stored to disk. The resolved type has all fields required — defaults are merged in at load time.
 
 ```typescript
-import { ConfigLoader } from "@aliou/pi-utils-settings";
+import { ConfigLoader } from "./config";
 
 /**
  * Raw config shape (what gets saved to disk).
@@ -276,7 +276,7 @@ export const configLoader = new ConfigLoader<
 >("my-extension", DEFAULTS);
 ```
 
-`ConfigLoader` comes from `@aliou/pi-utils-settings`, a standalone published package (source: `~/code/src/github.com/aliou/pi-extensions/packages/settings/`). It is listed as a regular dependency in `package.json`, not a peer dependency.
+`ConfigLoader` is a generic config loading pattern. Implement it locally in your extension using TypeScript interfaces for `RawConfig` and `ResolvedConfig`. It is listed as a regular dependency in `package.json`, not a peer dependency.
 
 The name passed to `ConfigLoader` determines the filename: `"my-extension"` → `~/.pi/agent/extensions/my-extension.json`.
 
@@ -323,7 +323,7 @@ export const configLoader = new ConfigLoader<MyExtensionConfig, ResolvedMyExtens
 For evolving config shape across versions, pass named migrations to `ConfigLoader`:
 
 ```typescript
-import { ConfigLoader, type Migration, buildSchemaUrl } from "@aliou/pi-utils-settings";
+import { ConfigLoader, type Migration, buildSchemaUrl } from "./config";
 import pkg from "../package.json" with { type: "json" };
 
 const legacyMigration: Migration<MyExtensionConfig> = {
@@ -356,14 +356,14 @@ Each migration has:
 
 ### JSON Schema for Config Validation
 
-Use `buildSchemaUrl(pkg.name, pkg.version)` from `@aliou/pi-utils-settings` to generate a schema URL. Config files get a `$schema` field pointing to the published schema, enabling editor validation and autocompletion.
+Use `buildSchemaUrl(pkg.name, pkg.version)` from `the settings utility module` to generate a schema URL. Config files get a `$schema` field pointing to the published schema, enabling editor validation and autocompletion.
 
 ## Settings Command
 
-Extensions with user-configurable settings use `registerSettingsCommand` from `@aliou/pi-utils-settings` to create a settings UI with Local/Global tabs:
+Extensions with user-configurable settings use `registerSettingsCommand` from `the settings utility module` to create a settings UI with Local/Global tabs:
 
 ```typescript
-import { registerSettingsCommand, type SettingsSection } from "@aliou/pi-utils-settings";
+// See Pi docs/tui.md SettingsList pattern
 
 registerSettingsCommand<MyConfig, ResolvedMyConfig>(pi, {
   commandName: "my-extension:settings",
@@ -392,10 +392,10 @@ For complex nested config (workspaces, profiles), use `submenu` fields with `Set
 
 ### Auth Wizard
 
-For extensions requiring API credentials, use the `Wizard` component from `@aliou/pi-utils-settings` for multi-step onboarding:
+For extensions requiring API credentials, use the `Wizard` component from `the settings utility module` for multi-step onboarding:
 
 ```typescript
-import { Wizard, FuzzySelector, type WizardStepContext } from "@aliou/pi-utils-settings";
+// Implement multi-step wizard with ctx.ui.custom()
 
 const wizard = new Wizard({
   title: "My Auth",
@@ -565,15 +565,15 @@ Key differences from standalone:
 
 ### Workspace dependencies
 
-When an extension depends on another workspace package (e.g., `@aliou/pi-utils-settings`, `@aliou/pi-agent-kit`), use the `workspace:^` protocol instead of a version range:
+When an extension depends on another workspace package (e.g., a shared library in the same monorepo), use the `workspace:^` protocol instead of a version range:
 
 ```json
 {
   "dependencies": {
-    "@aliou/pi-utils-settings": "workspace:^",
-    "@aliou/sh": "^0.1.0"
+    "the settings utility module": "workspace:^",
+    "a shell parser": "^0.1.0"
   }
 }
 ```
 
-Use `workspace:^` only for packages that live in this monorepo (under `packages/` or `extensions/`). External published packages like `@aliou/sh` keep regular version ranges.
+Use `workspace:^` only for packages that live in this monorepo (under `packages/` or `extensions/`). External published packages like `a shell parser` keep regular version ranges.

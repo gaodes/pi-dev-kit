@@ -69,7 +69,9 @@ function getPrimeSettings(): Record<string, unknown> {
 
 function shouldShowOnStartup(): boolean {
 	const settings = getPrimeSettings();
-	const toolSettings = settings["pi-tools"] as Record<string, unknown> | undefined;
+	const toolSettings = settings["pi-tools"] as
+		| Record<string, unknown>
+		| undefined;
 	if (toolSettings && typeof toolSettings.showOnStartup === "boolean") {
 		return toolSettings.showOnStartup;
 	}
@@ -84,12 +86,20 @@ function toSourceGroup(source: string): "builtin" | "sdk" | "extensions" {
 	return source === "extension" ? "extensions" : (source as "builtin" | "sdk");
 }
 
-function getAllLoadedTools(allTools: ReturnType<ExtensionAPI["getAllTools"]>, activeNames: Set<string>): LoadedTool[] {
+function getAllLoadedTools(
+	allTools: ReturnType<ExtensionAPI["getAllTools"]>,
+	activeNames: Set<string>,
+): LoadedTool[] {
 	return allTools.map((tool) => {
 		const si = tool.sourceInfo;
 		const rawSource = si?.source ?? "";
-		const isBuiltin = (si?.path?.startsWith("<") ?? false) || rawSource === "builtin";
-		const source = isBuiltin ? "builtin" : rawSource === "sdk" ? "sdk" : "extension";
+		const isBuiltin =
+			(si?.path?.startsWith("<") ?? false) || rawSource === "builtin";
+		const source = isBuiltin
+			? "builtin"
+			: rawSource === "sdk"
+				? "sdk"
+				: "extension";
 
 		let extensionPath: string | undefined;
 		if (source === "extension") {
@@ -177,10 +187,26 @@ function getSourceLabel(source: string): string {
 // ---------------------------------------------------------------------------
 
 function buildToolGroups(tools: LoadedTool[]): ToolGroup[] {
-	const builtin: ToolGroup = { scope: "builtin", localTools: [], packages: new Map() };
-	const project: ToolGroup = { scope: "project", localTools: [], packages: new Map() };
-	const user: ToolGroup = { scope: "user", localTools: [], packages: new Map() };
-	const path: ToolGroup = { scope: "path", localTools: [], packages: new Map() };
+	const builtin: ToolGroup = {
+		scope: "builtin",
+		localTools: [],
+		packages: new Map(),
+	};
+	const project: ToolGroup = {
+		scope: "project",
+		localTools: [],
+		packages: new Map(),
+	};
+	const user: ToolGroup = {
+		scope: "user",
+		localTools: [],
+		packages: new Map(),
+	};
+	const path: ToolGroup = {
+		scope: "path",
+		localTools: [],
+		packages: new Map(),
+	};
 
 	for (const tool of tools) {
 		let group: ToolGroup;
@@ -203,7 +229,9 @@ function buildToolGroups(tools: LoadedTool[]): ToolGroup[] {
 		}
 	}
 
-	return [builtin, project, user, path].filter((g) => g.localTools.length > 0 || g.packages.size > 0);
+	return [builtin, project, user, path].filter(
+		(g) => g.localTools.length > 0 || g.packages.size > 0,
+	);
 }
 
 function buildStatsLine(tools: LoadedTool[]): string {
@@ -236,7 +264,11 @@ function getExtensionShortName(path: string): string {
 	return segments[segments.length - 1] || cleaned;
 }
 
-export function formatToolsList(tools: LoadedTool[], theme: Theme, compact = false): string {
+export function formatToolsList(
+	tools: LoadedTool[],
+	theme: Theme,
+	compact = false,
+): string {
 	if (compact) {
 		const lines: string[] = [];
 		lines.push(theme.fg("mdHeading", "\x1b[1m[Tools]\x1b[22m"));
@@ -259,7 +291,9 @@ export function formatToolsList(tools: LoadedTool[], theme: Theme, compact = fal
 		// Built-in
 		const builtinExts = bySource.get("builtin");
 		if (builtinExts) {
-			const names = [...builtinExts.values()].flat().sort((a, b) => a.localeCompare(b));
+			const names = [...builtinExts.values()]
+				.flat()
+				.sort((a, b) => a.localeCompare(b));
 			lines.push(`  ${theme.fg("accent", "built-in")}`);
 			lines.push(theme.fg("dim", `    ${names.join(", ")}`));
 		}
@@ -267,7 +301,9 @@ export function formatToolsList(tools: LoadedTool[], theme: Theme, compact = fal
 		// SDK
 		const sdkExts = bySource.get("sdk");
 		if (sdkExts) {
-			const names = [...sdkExts.values()].flat().sort((a, b) => a.localeCompare(b));
+			const names = [...sdkExts.values()]
+				.flat()
+				.sort((a, b) => a.localeCompare(b));
 			lines.push(`  ${theme.fg("accent", "sdk")}`);
 			lines.push(theme.fg("dim", `    ${names.join(", ")}`));
 		}
@@ -276,11 +312,18 @@ export function formatToolsList(tools: LoadedTool[], theme: Theme, compact = fal
 		const extExts = bySource.get("extension");
 		if (extExts) {
 			lines.push(`  ${theme.fg("accent", "Extensions")}`);
-			const sortedExts = Array.from(extExts.entries()).sort(([a], [b]) => a.localeCompare(b));
+			const sortedExts = Array.from(extExts.entries()).sort(([a], [b]) =>
+				a.localeCompare(b),
+			);
 			for (const [extPath, names] of sortedExts) {
 				const displayName = getExtensionShortName(extPath);
 				lines.push(`    ${theme.fg("mdLink", displayName)}`);
-				lines.push(theme.fg("dim", `      ${names.sort((a, b) => a.localeCompare(b)).join(", ")}`));
+				lines.push(
+					theme.fg(
+						"dim",
+						`      ${names.sort((a, b) => a.localeCompare(b)).join(", ")}`,
+					),
+				);
 			}
 		}
 
@@ -294,16 +337,26 @@ export function formatToolsList(tools: LoadedTool[], theme: Theme, compact = fal
 	const groups = buildToolGroups(tools);
 	for (const group of groups) {
 		lines.push(`  ${theme.fg("accent", group.scope)}`);
-		const sorted = [...group.localTools].sort((a, b) => a.name.localeCompare(b.name));
+		const sorted = [...group.localTools].sort((a, b) =>
+			a.name.localeCompare(b.name),
+		);
 		for (const tool of sorted) {
-			lines.push(theme.fg("dim", `    ${tool.active ? "●" : "○"} ${tool.name}`));
+			lines.push(
+				theme.fg("dim", `    ${tool.active ? "●" : "○"} ${tool.name}`),
+			);
 		}
-		const sortedPkgs = Array.from(group.packages.entries()).sort(([a], [b]) => a.localeCompare(b));
+		const sortedPkgs = Array.from(group.packages.entries()).sort(([a], [b]) =>
+			a.localeCompare(b),
+		);
 		for (const [source, pkgTools] of sortedPkgs) {
 			lines.push(`    ${theme.fg("mdLink", source)}`);
-			const sortedPkgTools = [...pkgTools].sort((a, b) => a.name.localeCompare(b.name));
+			const sortedPkgTools = [...pkgTools].sort((a, b) =>
+				a.name.localeCompare(b.name),
+			);
 			for (const tool of sortedPkgTools) {
-				lines.push(theme.fg("dim", `      ${tool.active ? "●" : "○"} ${tool.name}`));
+				lines.push(
+					theme.fg("dim", `      ${tool.active ? "●" : "○"} ${tool.name}`),
+				);
 			}
 		}
 	}
@@ -322,25 +375,38 @@ function formatToolsText(tools: LoadedTool[]): string {
 	for (const [source, group] of Object.entries(groups)) {
 		if (group.active.length === 0 && group.inactive.length === 0) continue;
 		lines.push(`## ${getSourceLabel(source)}`);
-		for (const tool of [...group.active, ...group.inactive].sort((a, b) => a.name.localeCompare(b.name))) {
+		for (const tool of [...group.active, ...group.inactive].sort((a, b) =>
+			a.name.localeCompare(b.name),
+		)) {
 			const status = tool.active ? "●" : "○";
 			const src = formatToolSource(tool.source, tool.extensionPath);
-			lines.push(`  ${status} **${tool.name}** — ${tool.description || "(no description)"} _(${src})_`);
+			lines.push(
+				`  ${status} **${tool.name}** — ${tool.description || "(no description)"} _(${src})_`,
+			);
 		}
 		lines.push("");
 	}
 
 	lines.push(`---`);
-	lines.push(`**Summary:** ${stats.total} tools · ${stats.active} active · ${stats.inactive} inactive`);
-	lines.push(`- Built-in: ${stats.builtin.total} (${stats.builtin.active} active)`);
+	lines.push(
+		`**Summary:** ${stats.total} tools · ${stats.active} active · ${stats.inactive} inactive`,
+	);
+	lines.push(
+		`- Built-in: ${stats.builtin.total} (${stats.builtin.active} active)`,
+	);
 	lines.push(`- SDK: ${stats.sdk.total} (${stats.sdk.active} active)`);
-	lines.push(`- Extensions: ${stats.extensions.total} (${stats.extensions.active} active)`);
+	lines.push(
+		`- Extensions: ${stats.extensions.total} (${stats.extensions.active} active)`,
+	);
 
 	return lines.join("\n");
 }
 
 function showTools(pi: ExtensionAPI, _ctx: ExtensionContext): void {
-	const tools = getAllLoadedTools(pi.getAllTools(), new Set(pi.getActiveTools()));
+	const tools = getAllLoadedTools(
+		pi.getAllTools(),
+		new Set(pi.getActiveTools()),
+	);
 	pi.sendMessage({
 		customType: "pi-loaded-tools",
 		content: `${tools.length} tools (${tools.filter((t) => t.active).length} active)`,
@@ -355,13 +421,14 @@ function showTools(pi: ExtensionAPI, _ctx: ExtensionContext): void {
 
 export function setupLoadedToolsTool(pi: ExtensionAPI) {
 	pi.registerTool<typeof LoadedToolsParams, LoadedToolsDetails>({
-		name: "loaded_tools",
+		name: "pi_loaded_tools",
 		label: "Loaded Tools",
-		description: "List all loaded tools with source provenance and active status",
+		description:
+			"List all loaded tools with source provenance and active status",
 		promptSnippet: "List all loaded tools",
 		promptGuidelines: [
-			"Use loaded_tools when the user asks about available tools, tool count, or what extensions provide",
-			"loaded_tools shows which tools are active vs inactive and where each tool comes from",
+			"Use pi_loaded_tools when the user asks about available tools, tool count, or what extensions provide",
+			"pi_loaded_tools shows which tools are active vs inactive and where each tool comes from",
 		],
 
 		parameters: LoadedToolsParams,
@@ -388,11 +455,16 @@ export function setupLoadedToolsTool(pi: ExtensionAPI) {
 			return new Text(theme.fg("dim", "Loaded Tools"), 0, 0);
 		},
 
-		renderResult(result: AgentToolResult<LoadedToolsDetails>, _options: ToolRenderResultOptions, theme: Theme): Text {
+		renderResult(
+			result: AgentToolResult<LoadedToolsDetails>,
+			_options: ToolRenderResultOptions,
+			theme: Theme,
+		): Text {
 			const { details } = result;
 			if (!details?.tools) {
 				const textBlock = result.content.find((c) => c.type === "text");
-				const msg = (textBlock?.type === "text" && textBlock.text) || "No tool data";
+				const msg =
+					(textBlock?.type === "text" && textBlock.text) || "No tool data";
 				return new Text(theme.fg("error", msg), 0, 0);
 			}
 			const stats = details.stats;
@@ -408,7 +480,8 @@ export function setupLoadedToolsTool(pi: ExtensionAPI) {
 
 export function registerLoadedToolsCommand(pi: ExtensionAPI) {
 	pi.registerCommand("tools", {
-		description: "List all loaded tools with source provenance and active status",
+		description:
+			"List all loaded tools with source provenance and active status",
 		handler: async (_args, ctx) => {
 			await Promise.resolve(showTools(pi, ctx));
 		},

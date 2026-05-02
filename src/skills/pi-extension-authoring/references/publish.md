@@ -93,7 +93,7 @@ Before the workflow can publish a package that has never been on npm:
 2. Add the `NPM_TOKEN` secret to the repo (see above).
 3. The first time the version PR is merged, the workflow publishes the package. npm will create the package entry automatically — no manual `npm publish` needed.
 
-If the package name is scoped (e.g., `@aliou/pi-my-extension`) and the scope is new to your npm account, you may need to create the scope first at npmjs.com or run `npm publish --access public` once manually to register it.
+If the package name is scoped (e.g., `@scope/pi-my-extension`) and the scope is new to your npm account, you may need to create the scope first at npmjs.com or run `npm publish --access public` once manually to register it.
 
 ## Installation
 
