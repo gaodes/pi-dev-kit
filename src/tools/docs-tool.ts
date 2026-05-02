@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { ToolCallHeader } from "@aliou/pi-utils-ui";
+import { ToolCallHeader } from "@gaodes/pi-utils-ui";
 import type {
 	AgentToolResult,
 	ExtensionAPI,
