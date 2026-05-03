@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 This is a fork of [@aliou/pi-dev-kit](https://github.com/aliou/pi-dev-kit) by [Aliou DIA](https://github.com/aliou).
 All versions prior to the fork are credited to the original author.
 
+## [2.0.2] - 2026-05-03
+
+### Changed
+
+- Refresh README package links for npm, GitHub source, and upstream provenance.
+- Bump `@gaodes/pi-utils-ui` dependency to `^0.3.1`.
+
 ## [2.0.1] - 2026-05-03
 
 ### Added
@@ -51,5 +58,6 @@ All versions prior to the fork are credited to the original author.
 
 - Initial release: `pi_version`, `pi_docs`, `pi_changelog`, `pi_changelog_versions`
 
+[2.0.2]: https://github.com/gaodes/pi-dev-kit/releases/tag/v2.0.2
 [2.0.1]: https://github.com/gaodes/pi-dev-kit/releases/tag/v2.0.1
 [2.0.0]: https://github.com/gaodes/pi-dev-kit/releases/tag/v2.0.0

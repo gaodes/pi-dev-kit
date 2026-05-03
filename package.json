@@ -1,7 +1,7 @@
 {
   "name": "@gaodes/pi-dev-kit",
-  "version": "2.0.1",
-  "description": "Developer toolkit for Pi \u2014 modular skills for authoring extensions, skills, prompt templates, themes, packages, and context files. Includes introspection tools for version, docs, changelog, benchmarking, and loaded tools.",
+  "version": "2.0.2",
+  "description": "Developer toolkit for Pi — modular skills for authoring extensions, skills, prompt templates, themes, packages, and context files. Includes introspection tools for version, docs, changelog, benchmarking, and loaded tools.",
   "keywords": [
     "pi-package",
     "pi",
@@ -28,7 +28,7 @@
     ]
   },
   "dependencies": {
-    "@gaodes/pi-utils-ui": "^0.3.0",
+    "@gaodes/pi-utils-ui": "^0.3.1",
     "typebox": "^1.1.24"
   },
   "peerDependencies": {
@@ -45,7 +45,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/gaodes/pi-dev-kit.git"
+    "url": "git+https://github.com/gaodes/pi-dev-kit.git"
   },
   "author": "Aliou DIA (https://github.com/aliou)",
   "contributors": [
