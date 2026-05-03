@@ -12,6 +12,8 @@
 
 Developer toolkit for the Pi coding agent.
 
+[**Source**](https://github.com/gaodes/pi-dev-kit) · [**npm**](https://www.npmjs.com/package/@gaodes/pi-dev-kit) · [**Upstream**](https://github.com/aliou/pi-dev-kit)
+
 ## Tools
 
 | Tool                     | Description                                                                                                                                                                                                                                       |
