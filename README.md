@@ -1,17 +1,28 @@
-# pi-dev-kit
+# @gaodes/pi-dev-kit
+
+> **Fork of [@aliou/pi-dev-kit](https://github.com/aliou/pi-dev-kit)** by [Aliou DIA](https://github.com/aliou) — MIT License
+>
+> Additional tools ported from:
+>
+> - [pi-updater](https://github.com/tonze/pi-updater) by [tonze](https://github.com/tonze) — `pi_updater` tool, `/update` command
+> - [@alexanderfortin/pi-loaded-tools](https://github.com/shaftoe/pi-loaded-tools) by [shaftoe](https://github.com/shaftoe) — `loaded_tools` tool, `/tools` command, message renderer
+>
+> This fork is maintained by [El Che](https://github.com/gaodes) under the `@gaodes` npm scope.
+> The original project and all upstream authors retain full credit for their work.
 
 Developer toolkit for the Pi coding agent.
 
 ## Tools
 
-| Tool                    | Description                                                                                                                                                                                                                                       |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pi_version`            | Returns the currently running Pi version.                                                                                                                                                                                                         |
-| `pi_docs`               | Lists Pi markdown documentation files from the installation directory.                                                                                                                                                                            |
-| `pi_changelog`          | Returns changelog entries for a specific Pi version (or latest). Fetches from GitHub for versions newer than installed.                                                                                                                           |
-| `pi_changelog_versions` | Lists all available Pi changelog versions.                                                                                                                                                                                                        |
-| `pi_ext_benchmark`      | Profile Pi extension loading times — discovers all extensions (global, project-local, packages) and measures import + factory execution time per extension. Actions: `profile` (default), `list`. Scopes: `all`, `global`, `project`, `packages`. |
-| `loaded_tools`          | List all loaded tools with source provenance and active status. Returns tools grouped by source (built-in, SDK, extensions) with active/inactive indicators and per-extension grouping.                                                           |
+| Tool                     | Description                                                                                                                                                                                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pi_version`             | Returns the currently running Pi version.                                                                                                                                                                                                         |
+| `pi_docs`                | Lists Pi markdown documentation files from the installation directory.                                                                                                                                                                            |
+| `pi_changelog`           | Returns changelog entries for a specific Pi version (or latest). Fetches from GitHub for versions newer than installed.                                                                                                                           |
+| `pi_changelog_versions`  | Lists all available Pi changelog versions.                                                                                                                                                                                                        |
+| `pi_ext_benchmark`       | Profile Pi extension loading times — discovers all extensions (global, project-local, packages) and measures import + factory execution time per extension. Actions: `profile` (default), `list`. Scopes: `all`, `global`, `project`, `packages`. |
+| `loaded_tools`           | List all loaded tools with source provenance and active status. Returns tools grouped by source (built-in, SDK, extensions) with active/inactive indicators and per-extension grouping.                                                           |
+| `detect_package_manager` | Detect the package manager used in the current project by checking lockfiles and `package.json`. Returns the package manager name, version, lockfile, and install/run commands.                                                                   |
 
 ## Commands
 
@@ -65,5 +76,5 @@ Or per-project in `.pi/prime-settings.json`.
 
 ## Related extensions
 
-- **[pi-package-manager](../pi-package-manager)** — `detect_package_manager` and `pi_package_manager` tools.
+- **[pi-package-manager](../pi-package-manager)** — `pi_package_manager` tool for scanning, installing, and uninstalling Pi packages.
 - **[pi-updater](../pi-updater)** — `pi_updater` tool and `/update` command.

@@ -1,10 +1,11 @@
 {
-  "name": "pi-dev-kit",
-  "version": "2.0.0",
+  "name": "@gaodes/pi-dev-kit",
+  "version": "2.1.0",
   "description": "Developer toolkit for Pi \u2014 modular skills for authoring extensions, skills, prompt templates, themes, packages, and context files. Includes introspection tools for version, docs, changelog, benchmarking, and loaded tools.",
   "keywords": [
     "pi-package",
     "pi",
+    "pi-dev-kit",
     "dev-kit",
     "tools"
   ],
@@ -12,7 +13,8 @@
   "main": "./src/index.ts",
   "files": [
     "src/",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "pi": {
     "extensions": [
@@ -43,7 +45,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "ssh://git@gitlab-ssh.elches.dev:2222/agents/primecodex/extensions/pi-dev-kit.git"
+    "url": "https://github.com/gaodes/pi-dev-kit.git"
   },
+  "author": "Aliou DIA (https://github.com/aliou)",
+  "contributors": [
+    "tonze (https://github.com/tonze)",
+    "shaftoe (https://github.com/shaftoe)",
+    "El Che (https://github.com/gaodes)"
+  ],
   "license": "MIT"
 }

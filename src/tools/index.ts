@@ -1,5 +1,6 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { setupChangelogTool } from "./changelog-tool";
+import { setupDetectPackageManagerTool } from "./detect-pm-tool";
 import { setupDocsTool } from "./docs-tool";
 import { setupExtBenchmarkTool } from "./ext-benchmark-tool";
 import { setupLoadedToolsTool } from "./loaded-tools";
@@ -11,4 +12,5 @@ export function setupTools(pi: ExtensionAPI) {
 	setupDocsTool(pi);
 	setupChangelogTool(pi);
 	setupLoadedToolsTool(pi);
+	setupDetectPackageManagerTool(pi);
 }
