@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 This is a fork of [@aliou/pi-dev-kit](https://github.com/aliou/pi-dev-kit) by [Aliou DIA](https://github.com/aliou).
 All versions prior to the fork are credited to the original author.
 
+## [2.0.3] - 2026-05-08
+
+### Changed
+
+- Updated peer dependencies from `@mariozechner/*` to `@earendil-works/*` following the Pi 0.74.0 scope migration.
+
 ## [2.0.2] - 2026-05-03
 
 ### Changed

@@ -5,7 +5,7 @@ import * as path from "node:path";
 
 const require = createRequire(import.meta.url);
 
-const PI_PACKAGE_NAME = "@mariozechner/pi-coding-agent";
+const PI_PACKAGE_NAME = "@earendil-works/pi-coding-agent";
 
 /**
  * Find the currently running Pi installation directory.
@@ -29,14 +29,27 @@ export function findPiInstallation(): string | null {
 	// 2. Check PI_PACKAGE_DIR env var
 	const envPackageDir = process.env.PI_PACKAGE_DIR;
 	if (envPackageDir) {
-		const candidate = path.join(envPackageDir, "@mariozechner", "pi-coding-agent");
+		const candidate = path.join(
+			envPackageDir,
+			"@earendil-works",
+			"pi-coding-agent",
+		);
 		if (isPiPackage(candidate)) return candidate;
+		// Fallback: check old scope for users who haven't migrated yet
+		const legacyCandidate = path.join(
+			envPackageDir,
+			"@mariozechner",
+			"pi-coding-agent",
+		);
+		if (isPiPackage(legacyCandidate)) return legacyCandidate;
 	}
 
 	// 3. npm root -g
 	const globalRoots: string[] = [];
 	try {
-		const npmRoot = child_process.execSync("npm root -g", { encoding: "utf-8", timeout: 3000 }).trim();
+		const npmRoot = child_process
+			.execSync("npm root -g", { encoding: "utf-8", timeout: 3000 })
+			.trim();
 		if (npmRoot) globalRoots.push(npmRoot);
 	} catch {
 		// npm may be unavailable
@@ -47,8 +60,11 @@ export function findPiInstallation(): string | null {
 	globalRoots.push("/usr/local/lib/node_modules");
 
 	for (const root of globalRoots) {
-		const candidate = path.join(root, "@mariozechner", "pi-coding-agent");
+		const candidate = path.join(root, "@earendil-works", "pi-coding-agent");
 		if (isPiPackage(candidate)) return candidate;
+		// Fallback: check old scope for users who haven't migrated yet
+		const legacyCandidate = path.join(root, "@mariozechner", "pi-coding-agent");
+		if (isPiPackage(legacyCandidate)) return legacyCandidate;
 	}
 
 	// 5. Walk up from process.argv[1]

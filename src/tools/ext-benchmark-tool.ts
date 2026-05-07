@@ -10,8 +10,8 @@ import type {
 	ExtensionContext,
 	Theme,
 	ToolRenderResultOptions,
-} from "@mariozechner/pi-coding-agent";
-import { Text } from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
 // ---------------------------------------------------------------------------
@@ -424,11 +424,11 @@ function buildJitiAliases(): Record<string, string> {
 	};
 
 	const piCorePkgs = [
-		"@mariozechner/pi-coding-agent",
-		"@mariozechner/pi-agent-core",
-		"@mariozechner/pi-tui",
-		"@mariozechner/pi-ai",
-		"@mariozechner/pi-ai/oauth",
+		"@earendil-works/pi-coding-agent",
+		"@earendil-works/pi-agent-core",
+		"@earendil-works/pi-tui",
+		"@earendil-works/pi-ai",
+		"@earendil-works/pi-ai/oauth",
 	];
 	for (const pkg of piCorePkgs) {
 		const resolved = tryResolve(pkg);

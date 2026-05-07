@@ -111,7 +111,7 @@ async function run(): Promise<void> {
 		import: (path: string, opts?: { default?: true }) => Promise<unknown>;
 	} | null = null;
 	try {
-		const { createJiti } = await import("@mariozechner/jiti");
+		const { createJiti } = await import("@earendil-works/jiti");
 		jiti = createJiti(import.meta.url, {
 			moduleCache: false,
 			alias: input.aliases,

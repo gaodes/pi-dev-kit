@@ -3,9 +3,9 @@ import type {
 	AgentToolResult,
 	ExtensionAPI,
 	Theme,
-} from "@mariozechner/pi-coding-agent";
-import { defineTool, VERSION } from "@mariozechner/pi-coding-agent";
-import { Text } from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-coding-agent";
+import { defineTool, VERSION } from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
 import { type Static, Type } from "typebox";
 
 const VersionParams = Type.Object({});
