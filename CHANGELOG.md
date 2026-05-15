@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 This is a fork of [@aliou/pi-dev-kit](https://github.com/aliou/pi-dev-kit) by [Aliou DIA](https://github.com/aliou).
 All versions prior to the fork are credited to the original author.
 
+## [2.0.4] - 2026-05-15
+
+### Fixed
+
+- Fix `pi_ext_benchmark` failing to resolve TypeScript imports in worker threads. Moved benchmarking logic in-process so jiti uses the parent Pi process's module resolution context instead of an isolated worker.
+
 ## [2.0.3] - 2026-05-08
 
 ### Changed

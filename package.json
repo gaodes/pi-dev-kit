@@ -1,6 +1,6 @@
 {
   "name": "@gaodes/pi-dev-kit",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Developer toolkit for Pi — modular skills for authoring extensions, skills, prompt templates, themes, packages, and context files. Includes introspection tools for version, docs, changelog, benchmarking, and loaded tools.",
   "keywords": [
     "pi-package",

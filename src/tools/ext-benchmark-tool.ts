@@ -14,6 +14,8 @@ import type {
 import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
+// Re-export nothing from deleted worker — this file is self-contained now.
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -53,7 +55,8 @@ const ExtBenchmarkParams = Type.Object({
 		Type.Union(
 			[
 				Type.Literal("profile", {
-					description: "Re-import each extension and time import + factory execution (default)",
+					description:
+						"Re-import each extension and time import + factory execution (default)",
 				}),
 				Type.Literal("list", {
 					description: "List discovered extension paths without benchmarking",
@@ -182,7 +185,10 @@ function discoverExtensionsInDir(dir: string): string[] {
 		const entries = readdirSync(dir, { withFileTypes: true });
 		for (const entry of entries) {
 			const entryPath = join(dir, entry.name);
-			if ((entry.isFile() || entry.isSymbolicLink()) && isExtensionFile(entry.name)) {
+			if (
+				(entry.isFile() || entry.isSymbolicLink()) &&
+				isExtensionFile(entry.name)
+			) {
 				discovered.push(entryPath);
 				continue;
 			}
@@ -277,7 +283,9 @@ function discoverPackageExtensions(cwd: string): string[] {
 
 	const resolveNpm = (pkgName: string, scope: "global" | "project") => {
 		const candidate =
-			scope === "project" ? join(projectDir, "npm", "node_modules", pkgName) : join(npmGlobalRoot, pkgName);
+			scope === "project"
+				? join(projectDir, "npm", "node_modules", pkgName)
+				: join(npmGlobalRoot, pkgName);
 		if (!existsSync(candidate)) return;
 		const entries = resolveExtensionEntries(candidate);
 		if (entries) {
@@ -289,7 +297,8 @@ function discoverPackageExtensions(cwd: string): string[] {
 	};
 
 	const resolveGit = (scope: "global" | "project") => {
-		const gitBase = scope === "project" ? join(projectDir, "git") : join(agentDir, "git");
+		const gitBase =
+			scope === "project" ? join(projectDir, "git") : join(agentDir, "git");
 		if (!existsSync(gitBase)) return;
 		addUnique(discoverGitPackageExtensions(gitBase));
 	};
@@ -349,7 +358,10 @@ function discoverGitPackageExtensions(gitBase: string): string[] {
 // Extension name derivation
 // ---------------------------------------------------------------------------
 
-function discoverAllExtensions(cwd: string, scopeFilter: string): ExtensionEntry[] {
+function discoverAllExtensions(
+	cwd: string,
+	scopeFilter: string,
+): ExtensionEntry[] {
 	const agentDir = getAgentDir();
 	const seen = new Set<string>();
 	const entries: ExtensionEntry[] = [];
@@ -362,7 +374,10 @@ function discoverAllExtensions(cwd: string, scopeFilter: string): ExtensionEntry
 
 			let name: string;
 			if (location === "global" || location === "project") {
-				const extDir = location === "global" ? join(agentDir, "extensions") : join(cwd, ".pi", "extensions");
+				const extDir =
+					location === "global"
+						? join(agentDir, "extensions")
+						: join(cwd, ".pi", "extensions");
 				const rel = relative(extDir, resolved);
 				name = rel.split("/")[0];
 				if (isExtensionFile(name)) name = name.replace(/\.(ts|js)$/, "");
@@ -372,7 +387,9 @@ function discoverAllExtensions(cwd: string, scopeFilter: string): ExtensionEntry
 				if (nmIdx >= 0) {
 					const afterNm = resolved.slice(nmIdx + "node_modules".length + 1);
 					const parts = afterNm.split("/");
-					name = parts[0].startsWith("@") ? `${parts[0]}/${parts[1]}` : parts[0];
+					name = parts[0].startsWith("@")
+						? `${parts[0]}/${parts[1]}`
+						: parts[0];
 				} else if (resolved.includes(join(agentDir, "git"))) {
 					// Global git package — extract <user>/<repo> from path
 					const gitRel = relative(join(agentDir, "git"), resolved);
@@ -408,7 +425,90 @@ function discoverAllExtensions(cwd: string, scopeFilter: string): ExtensionEntry
 }
 
 // ---------------------------------------------------------------------------
-// Benchmarking: re-import each extension with jiti + time it
+// In-process benchmarking helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Stub ExtensionAPI that mimics the full API surface.
+ * Captures registrations without triggering real side effects.
+ */
+function createStubAPI(): Record<string, unknown> {
+	const noop = () => {};
+	const noopAsync = async () => {};
+	const noopReturn = () => undefined;
+	const noopReturnArr = () => [] as unknown[];
+	const noopReturnStr = () => "";
+
+	return {
+		registerTool: noop,
+		registerCommand: noop,
+		registerShortcut: noop,
+		registerFlag: noop,
+		registerProvider: noop,
+		registerMessageRenderer: noop,
+		on: noop,
+		appendEntry: noop,
+		sendMessage: noopAsync,
+		sendUserMessage: noopAsync,
+		exec: noopAsync,
+		events: { on: noop, emit: noopAsync, off: noop },
+		getFlag: noopReturn,
+		getFlags: noopReturnArr,
+		getLabel: noopReturnStr,
+		setLabel: noop,
+		getActiveTools: noopReturnArr,
+		getAllTools: noopReturnArr,
+		setActiveTools: noop,
+		refreshTools: noopAsync,
+		getCommands: noopReturnArr,
+		setModel: noop,
+		getThinkingLevel: noopReturn,
+		setThinkingLevel: noop,
+	};
+}
+
+async function benchmarkExtension(
+	extPath: string,
+	importer: (path: string) => Promise<unknown>,
+): Promise<{ importMs: number; factoryMs: number; error?: string }> {
+	const importStart = performance.now();
+	let factory: unknown;
+	try {
+		factory = await importer(extPath);
+	} catch (err) {
+		const importEnd = performance.now();
+		return {
+			importMs: Math.round((importEnd - importStart) * 100) / 100,
+			factoryMs: 0,
+			error: `Import failed: ${err instanceof Error ? err.message : String(err)}`,
+		};
+	}
+	const importEnd = performance.now();
+	const importMs = Math.round((importEnd - importStart) * 100) / 100;
+
+	if (typeof factory !== "function") {
+		return { importMs, factoryMs: 0 };
+	}
+
+	const factoryStart = performance.now();
+	try {
+		factory(createStubAPI());
+	} catch (err) {
+		const factoryEnd = performance.now();
+		return {
+			importMs,
+			factoryMs: Math.round((factoryEnd - factoryStart) * 100) / 100,
+			error: `Factory failed: ${err instanceof Error ? err.message : String(err)}`,
+		};
+	}
+	const factoryEnd = performance.now();
+	const factoryMs = Math.round((factoryEnd - factoryStart) * 100) / 100;
+
+	return { importMs, factoryMs };
+}
+
+// ---------------------------------------------------------------------------
+// Jiti alias resolution for module resolution in benchmarked extensions
 // ---------------------------------------------------------------------------
 
 function buildJitiAliases(): Record<string, string> {
@@ -507,7 +607,11 @@ function formatList(entries: ExtensionEntry[]): string {
 	if (entries.length === 0) return "No extensions discovered.";
 
 	const nameWidth = Math.max(4, ...entries.map((e) => e.name.length));
-	return entries.map((e) => `${e.name.padEnd(nameWidth)}  ${e.location.padEnd(7)}  ${e.path}`).join("\n");
+	return entries
+		.map(
+			(e) => `${e.name.padEnd(nameWidth)}  ${e.location.padEnd(7)}  ${e.path}`,
+		)
+		.join("\n");
 }
 
 // ---------------------------------------------------------------------------
@@ -559,7 +663,7 @@ export function setupExtBenchmarkTool(pi: ExtensionAPI) {
 				};
 			}
 
-			// Profile mode — run in a worker thread for isolation
+			// Profile mode — benchmark in-process with jiti
 			if (entries.length === 0) {
 				return {
 					content: [
@@ -578,50 +682,46 @@ export function setupExtBenchmarkTool(pi: ExtensionAPI) {
 			}
 
 			const aliases = buildJitiAliases();
-			const workerPath = new URL("./ext-benchmark-worker.ts", import.meta.url);
 
-			const { Worker } = await import("node:worker_threads");
+			// Build importer: prefer jiti (handles .ts natively), fallback to native import
+			let importer: (p: string) => Promise<unknown>;
+			try {
+				const { createJiti } = await import("@earendil-works/jiti");
+				const jiti = createJiti(import.meta.url, {
+					moduleCache: false,
+					alias: aliases,
+				});
+				importer = (p: string) => jiti.import(p, { default: true });
+			} catch {
+				// jiti unavailable — fallback to native import with cache busting
+				importer = async (p: string) => {
+					const mod = await import(`${p}?t=${Date.now()}`);
+					return mod.default ?? mod;
+				};
+			}
+
 			const overallStart = performance.now();
+			const results: BenchmarkResult[] = [];
 
-			const results: BenchmarkResult[] = await new Promise((resolve, reject) => {
-				const worker = new Worker(workerPath, {
-					workerData: {
-						extensions: entries.map((e) => ({
-							name: e.name,
-							path: e.path,
-							location: e.location,
-						})),
-						aliases,
-					},
+			for (const entry of entries) {
+				const { importMs, factoryMs, error } = await benchmarkExtension(
+					entry.path,
+					importer,
+				);
+				results.push({
+					name: entry.name,
+					path: entry.path,
+					location: entry.location,
+					importMs,
+					factoryMs,
+					totalMs: importMs + factoryMs,
+					success: !error,
+					error,
 				});
-
-				worker.on("message", (msg: unknown) => {
-					if (msg && typeof msg === "object" && "error" in msg) {
-						reject(new Error((msg as { error: string }).error));
-						return;
-					}
-					resolve(msg as BenchmarkResult[]);
-				});
-
-				worker.on("error", reject);
-
-				// Timeout after 60s to prevent hanging
-				const timeout = setTimeout(() => {
-					worker.terminate();
-					reject(new Error("Benchmark timed out after 60s"));
-				}, 60_000);
-
-				worker.on("exit", () => clearTimeout(timeout));
-			});
+			}
 
 			const overallEnd = performance.now();
 			const totalTimeMs = Math.round((overallEnd - overallStart) * 100) / 100;
-
-			// Merge paths back in (worker doesn't return them)
-			const pathMap = new Map(entries.map((e) => [e.name + e.location, e.path]));
-			for (const r of results) {
-				r.path = pathMap.get(r.name + r.location) ?? "";
-			}
 
 			const sorted = [...results].sort((a, b) => b.totalMs - a.totalMs);
 			const text = formatResults(results);
@@ -641,17 +741,25 @@ export function setupExtBenchmarkTool(pi: ExtensionAPI) {
 			return new Text(theme.fg("dim", "Extension Benchmark"), 0, 0);
 		},
 
-		renderResult(result: AgentToolResult<BenchmarkDetails>, _options: ToolRenderResultOptions, theme: Theme): Text {
+		renderResult(
+			result: AgentToolResult<BenchmarkDetails>,
+			_options: ToolRenderResultOptions,
+			theme: Theme,
+		): Text {
 			const { details } = result;
 			if (!details || details.results.length === 0) {
 				const textBlock = result.content.find((c) => c.type === "text");
-				const msg = (textBlock?.type === "text" && textBlock.text) || "No results";
+				const msg =
+					(textBlock?.type === "text" && textBlock.text) || "No results";
 				return new Text(theme.fg("dim", msg), 0, 0);
 			}
 
 			const ok = details.results.filter((r) => r.success).length;
 			const fail = details.results.length - ok;
-			const status = fail > 0 ? theme.fg("warning", `${fail} failed`) : theme.fg("success", "all ok");
+			const status =
+				fail > 0
+					? theme.fg("warning", `${fail} failed`)
+					: theme.fg("success", "all ok");
 			return new Text(
 				`${theme.fg("accent", `${details.results.length} extensions`)} · ${formatDuration(details.totalTimeMs)} · ${status} · slowest: ${details.slowest}`,
 				0,
