@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
-import { mergeConfig } from "./merge";
-import { sanitizeConfig } from "./sanitize";
-import type { RawConfig, ResolvedConfig, SettingsDef } from "./types";
+import { mergeConfig } from "./merge.js";
+import { sanitizeConfig } from "./sanitize.js";
+import type { RawConfig, ResolvedConfig, SettingsDef } from "./types.js";
 
 const GLOBAL_SETTINGS_PATH = path.join(
 	homedir(),

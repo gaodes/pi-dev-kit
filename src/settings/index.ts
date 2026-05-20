@@ -3,7 +3,7 @@ export {
 	numberSetting,
 	objectSetting,
 	stringSetting,
-} from "./factories";
+} from "./factories.js";
 
 export {
 	ensurePrimeSettings,
@@ -11,12 +11,12 @@ export {
 	loadConfig,
 	loadGlobalSettings,
 	saveGlobalSettings,
-} from "./io";
-export { mergeConfig } from "./merge";
-export { sanitizeConfig } from "./sanitize";
+} from "./io.js";
+export { mergeConfig } from "./merge.js";
+export { sanitizeConfig } from "./sanitize.js";
 export type {
 	RawConfig,
 	ResolvedConfig,
 	SettingDefinition,
 	SettingsDef,
-} from "./types";
+} from "./types.js";

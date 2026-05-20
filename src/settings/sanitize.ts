@@ -1,4 +1,4 @@
-import type { RawConfig, ResolvedConfig, SettingsDef } from "./types";
+import type { RawConfig, ResolvedConfig, SettingsDef, SettingDefinition } from "./types.js";
 
 export function sanitizeConfig<T extends ResolvedConfig>(
 	raw: RawConfig,
@@ -6,10 +6,11 @@ export function sanitizeConfig<T extends ResolvedConfig>(
 ): T {
 	const result = {} as T;
 	for (const [key, def] of Object.entries(definitions)) {
+		const typedDef = def as SettingDefinition<unknown>;
 		if (key in raw && raw[key] !== undefined) {
 			(result as Record<string, unknown>)[key] = raw[key];
 		} else {
-			(result as Record<string, unknown>)[key] = def.default;
+			(result as Record<string, unknown>)[key] = typedDef.default;
 		}
 	}
 	return result;

@@ -1,4 +1,4 @@
-import type { SettingDefinition } from "./types";
+import type { SettingDefinition } from "./types.js";
 
 export function booleanSetting(
 	key: string,

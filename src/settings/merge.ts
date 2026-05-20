@@ -1,4 +1,4 @@
-import type { RawConfig, ResolvedConfig, SettingsDef } from "./types";
+import type { RawConfig, ResolvedConfig, SettingsDef } from "./types.js";
 
 export function mergeConfig<T extends ResolvedConfig>(
 	global: RawConfig,
