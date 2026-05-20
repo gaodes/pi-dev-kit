@@ -1,4 +1,9 @@
-import type { RawConfig, ResolvedConfig, SettingsDef, SettingDefinition } from "./types.js";
+import type {
+	RawConfig,
+	ResolvedConfig,
+	SettingsDef,
+	SettingDefinition,
+} from "./types.js";
 
 export function sanitizeConfig<T extends ResolvedConfig>(
 	raw: RawConfig,
