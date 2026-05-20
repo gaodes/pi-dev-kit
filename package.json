@@ -57,5 +57,8 @@
     "shaftoe (https://github.com/shaftoe)",
     "El Che (https://github.com/gaodes)"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^25.9.1"
+  }
 }

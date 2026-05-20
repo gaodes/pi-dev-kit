@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-05-01",
+  "updatedAt": "2026-05-06",
   "primary": {
     "name": "@aliou/pi-dev-kit",
     "type": "npm",
@@ -12,21 +12,12 @@
   },
   "inspirations": [
     {
-      "name": "pi-updater",
-      "type": "npm",
-      "url": "npm:pi-updater",
-      "repo": "https://github.com/tonze/pi-updater",
-      "license": "MIT",
-      "upstreamVersion": "0.3.1",
-      "ported": ["pi_updater tool", "/update command"]
-    },
-    {
       "name": "@alexanderfortin/pi-loaded-tools",
       "type": "npm",
       "url": "npm:@alexanderfortin/pi-loaded-tools",
       "repo": "https://github.com/shaftoe/pi-loaded-tools",
       "license": "MIT",
-      "upstreamVersion": "0.4.3",
+      "upstreamVersion": "0.4.4",
       "ported": ["loaded_tools tool", "/tools command", "pi-loaded-tools message renderer", "startup display"]
     }
   ]
